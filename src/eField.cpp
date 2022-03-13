@@ -2,12 +2,9 @@
 
 EField::EField(const sf::Vector2f& dim,
 			   const sf::Vector2u& resolution)
+	: m_spaceDimension(dim)
 {
-	
-	m_spaceDimension = dim;
-	m_vectorGridColor = sf::Color(255, 255, 0);
-	setVectorScale(0.01);
-	displayEField(true);
+	m_vectorGridColor = sf::Color(255, 255, 0);	
 	setGridSize(resolution);
 }
 
@@ -20,7 +17,7 @@ const EField& EField::operator+=(const EField& other)
 	if (other.m_gridSize != m_gridSize ||
 		other.m_spaceDimension != m_spaceDimension)
 	{
-		std::cout << "Error: other EField has not the same dimensions";
+		PRINT_ERROR("Other EField has not the same dimensions");
 		return *this;
 	}
 	for (size_t x = 0; x < m_gridSize.x; ++x)
@@ -83,14 +80,7 @@ const sf::Color& EField::getGridColor() const
 {
 	return m_vectorGridColor;
 }
-void EField::setVectorScale(float scale)
-{
-	m_vectorScale = scale;
-}
-float EField::getVectorScale() const
-{
-	return m_vectorScale;
-}
+
 void EField::setGridVector(const sf::Vector2u& index,
 				           const sf::Vector2f& vec)
 {
@@ -103,7 +93,7 @@ const sf::Vector2f& EField::getGridVector(const sf::Vector2u& index)
 	if (m_vectorGrid.size() >= index.x ||
 		m_vectorGrid[0].size() >= index.y)
 	{
-		std::cout << "Error: position out of grid\n";
+		PRINT_ERROR("Position out of grid");
 		return sf::Vector2f(0, 0);
 	}
 	return m_vectorGrid[index.x][index.y]->getVector();;
@@ -146,15 +136,6 @@ void EField::clearParticles()
 }
 
 
-void EField::displayEField(bool enable)
-{
-	m_display_eField = enable;
-}
-
-bool EField::displayEField() const
-{
-	return m_display_eField;
-}
 void EField::calculatePhysics(float timeIntervalSec)
 {
 	calculateField();
@@ -163,15 +144,6 @@ void EField::calculatePhysics(float timeIntervalSec)
 		if (p->isStatic())
 			continue;
 		sf::Vector2f pos = p->getPos();
-		sf::Vector2i indexPos((m_gridSize.x * pos.x) / m_spaceDimension.x,
-							  (m_gridSize.y * pos.y) / m_spaceDimension.y);
-
-		if (indexPos.x >= m_gridSize.x ||
-			indexPos.y >= m_gridSize.y)
-		{
-			std::cout << "Error: position out of grid\n";
-			continue;
-		}
 
 		p->calculatePhysiscs(m_particles, timeIntervalSec);
 	}
@@ -181,19 +153,11 @@ void EField::calculatePhysics(float timeIntervalSec)
 void EField::draw(sf::RenderWindow* window,
 				  const sf::Vector2f& offset)
 {
-	
-
-	if(m_display_eField)
-		for (size_t x = 0; x < m_vectorGrid.size(); ++x)
-			for (size_t y = 0; y < m_vectorGrid[x].size(); ++y)
-			{
-				m_vectorGrid[x][y]->draw(window, offset);
-			}
-
-	for (Particle* p : m_particles)
-	{
-		p->draw(window, offset);
-	}
+	for (size_t x = 0; x < m_vectorGrid.size(); ++x)
+		for (size_t y = 0; y < m_vectorGrid[x].size(); ++y)
+		{
+			m_vectorGrid[x][y]->draw(window, offset);
+		}
 }
 
 void EField::clearVectorGrid()
@@ -207,6 +171,7 @@ void EField::buildVectorGrid()
 {
 	sf::Vector2f vectorSpacing(m_spaceDimension.x / m_gridSize.x,
 							   m_spaceDimension.y / m_gridSize.y);
+	float vectorLength = VectorMath::getLength(vectorSpacing)/2.f;
 	m_vectorGrid.reserve(m_gridSize.x);
 	for (size_t x = 0; x < m_gridSize.x; ++x)
 	{
@@ -218,6 +183,7 @@ void EField::buildVectorGrid()
 			vector->setPos(vectorSpacing.x / 2.f + vectorSpacing.x * x,
 						   vectorSpacing.y / 2.f + vectorSpacing.y * y);
 			vector->setColor(m_vectorGridColor);
+			vector->setDisplayLength(vectorLength);
 			m_vectorGrid[x].push_back(vector);
 		}
 	}
@@ -225,25 +191,21 @@ void EField::buildVectorGrid()
 
 void EField::calculateField()
 {
-	/*for (Particle* p : m_particles)
-	{
-		p->calculateVectorField();
-	}*/
+	if (!m_visible)
+		return;
+	
 	for (size_t x = 0; x < m_vectorGrid.size(); ++x)
 		for (size_t y = 0; y < m_vectorGrid[x].size(); ++y)
 		{
 			VectorPainter* vec = m_vectorGrid[x][y];
 			sf::Vector2f sum(0, 0);
 			sf::Vector2f pos = vec->getPos();
-			//sf::Vector2f pos(-(m_gridSize.x /2.f) + (x * m_spaceDimension.x) / m_gridSize.x,
-			//				 -(m_gridSize.y /2.f) + (y * m_spaceDimension.y) / m_gridSize.y);
 
 			for (Particle* p : m_particles)
 			{
 				sum += p->getFieldVector(pos);
 			}
-			//std::cout << "VectorLength: " << VectorMath::getLength(sum * m_vectorScale)<<"\n";
-			vec->setVector(sum * m_vectorScale);
+			vec->setVector(sum);
 		}
 }
 
@@ -259,21 +221,40 @@ void EField::applyPhysics()
 }
 void EField::checkParticleBounds()
 {
-	auto isInRect = [](const sf::Vector2f& pos,
-					   const sf::Vector2f& minBound,
-					   const sf::Vector2f& maxBound)
-	{
-		return	pos.x > minBound.x && pos.y > minBound.y &&
-			    pos.x < maxBound.x && pos.y < maxBound.y;
-	};
-
 	for (Particle* p : m_particles)
 	{
 		if (p->isStatic())
 			continue;
-		if (!isInRect(p->getPos(), sf::Vector2f(0, 0), m_spaceDimension))
+		sf::Vector2f pos = p->getPos();
+		sf::Vector2f deltaPos = p->getDeltaPos();
+		sf::Vector2f velocity = p->getVelocity();
+
+		sf::Vector2f newDeltaPos(0,0);
+
+		float offset = 1;
+
+		if (pos.x <= 0)
 		{
-			p->boundryCollision();
+			newDeltaPos.x = -pos.x+ offset;
+			velocity.x = 0;
 		}
+		else if (pos.x >= m_spaceDimension.x)
+		{
+			newDeltaPos.x = m_spaceDimension.x - pos.x- offset;
+			velocity.x = 0;
+		}
+		if (pos.y <= 0)
+		{
+			newDeltaPos.y = -pos.y+ offset;
+			velocity.y = 0;
+		}
+		else if (pos.y >= m_spaceDimension.y)
+		{
+			newDeltaPos.y = m_spaceDimension.y -pos.y- offset;
+			velocity.y = 0;
+		}
+		p->move(newDeltaPos);
+		p->setVelocity(velocity);
+
 	}
 }

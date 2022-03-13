@@ -7,8 +7,24 @@ sf::Color getColorFromSignal(float signal,
 {
 	sf::Color color;
 	float middle = (max + min) / 2;
+
+
+	float red = mapF(signal, max, min, 30, 255);
+	if (red < 0)
+		red = 0;
+	else if (red > 255)
+		red = 255;
+
+	float green = mapF(signal, min, max, 30, 255);
+	if (green < 0)
+		green = 0;
+	else if (green > 255)
+		green = 255;
+
+	color.g = green;
+	color.r = red;
 	
-	if (signal < middle)
+	/*if (signal < middle)
 	{
 		if (signal < min)
 			signal = min;
@@ -21,13 +37,10 @@ sf::Color getColorFromSignal(float signal,
 			signal = max;
 		color.r = 0;
 		color.g = mapF(signal, middle, max, 30, 255);
-	}
+	}*/
 	return color;
 }
-float mapF(float x, float in_min, float in_max, float out_min, float out_max)
-{
-	return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
-}
+
 
 namespace VectorMath
 {

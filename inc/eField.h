@@ -27,8 +27,6 @@ class EField : public Drawable
 	void setGridColor(const sf::Color& color);
 	const sf::Color& getGridColor() const;
 
-	void setVectorScale(float scale);
-	float getVectorScale() const;
 
 	void setGridVector(const sf::Vector2u& index,
 				   const sf::Vector2f& vec);
@@ -42,8 +40,6 @@ class EField : public Drawable
 	void removeParticle(Particle* p);
 	void clearParticles();
 
-	void displayEField(bool enable);
-	bool displayEField() const;
 	void calculatePhysics(float timeIntervalSec);
 	virtual void draw(sf::RenderWindow* window,
 					  const sf::Vector2f& offset = sf::Vector2f(0, 0));
@@ -64,13 +60,10 @@ class EField : public Drawable
 
 	sf::Vector2u m_gridSize;
 	sf::Vector2f m_spaceDimension;
-	bool m_display_eField;
 
 	vector<Particle*> m_particles;
-	//vector<VectorField*>
 
 	sf::Color m_vectorGridColor;
-	float m_vectorScale;
 	vector < vector<VectorPainter* > >m_vectorGrid;
 
 };

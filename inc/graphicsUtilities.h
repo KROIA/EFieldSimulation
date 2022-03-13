@@ -4,13 +4,13 @@
 #include <iostream>
 #include <SFML/Graphics.hpp>
 #include <string>
+#include "debugHelper.h"
 
 
 
 sf::Color getColorFromSignal(float signal,
 				   float min = -1.f,
 				   float max =  1.f);
-float mapF(float x, float in_min, float in_max, float out_min, float out_max);
 
 namespace VectorMath
 {
@@ -20,5 +20,4 @@ namespace VectorMath
 	sf::Vector2f getRotated(sf::Vector2f vec, float rad);
 	sf::Vector2f getUnitVector();
 };
-
 

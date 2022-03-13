@@ -4,11 +4,14 @@
 
 Drawable::Drawable()
 	: m_pos(0, 0)
+	, m_visible(true)
+	, m_drawDebug(false)
 {
-
 }
 Drawable::Drawable(const Drawable& other)
 	: m_pos(other.m_pos)
+	, m_visible(other.m_visible)
+	, m_drawDebug(other.m_drawDebug)
 {
 
 }
@@ -22,6 +25,23 @@ const Drawable& Drawable::operator=(const Drawable& other)
 	m_pos = other.m_pos;
 
 	return *this;
+}
+
+void Drawable::setVisible(bool enable)
+{
+	m_visible = enable;
+}
+bool Drawable::isVisible() const
+{
+	return m_visible;
+}
+void Drawable::setDrawDebug(bool enable)
+{
+	m_drawDebug = enable;
+}
+bool Drawable::doesDrawDebug() const
+{
+	return m_drawDebug;
 }
 
 void Drawable::setPos(const sf::Vector2f& pos)
@@ -46,5 +66,25 @@ const sf::Vector2f& Drawable::getPos() const
 {
 	return m_pos;
 }
+void Drawable::draw(sf::RenderWindow* window,
+					const sf::Vector2f& offset)
+{
 
+}
+void Drawable::drawDebug(sf::RenderWindow* window,
+						 const sf::Vector2f& offset)
+{
+
+}
+
+void Drawable::displayCallDraw(sf::RenderWindow* window,
+					           const sf::Vector2f& offset)
+{
+	if (m_visible)
+	{
+		draw(window, offset);
+		if (m_drawDebug)
+			drawDebug(window, offset);
+	}
+}
 

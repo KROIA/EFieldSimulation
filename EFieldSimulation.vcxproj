@@ -150,19 +150,32 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="EFieldSimulation.cpp" />
+    <ClCompile Include="src\debugHelper.cpp" />
     <ClCompile Include="src\display.cpp" />
+    <ClCompile Include="src\displayInterface.cpp" />
+    <ClCompile Include="src\distributionPlot.cpp" />
     <ClCompile Include="src\drawable.cpp" />
     <ClCompile Include="src\eField.cpp" />
     <ClCompile Include="src\graphicsUtilities.cpp" />
     <ClCompile Include="src\particle.cpp" />
+    <ClCompile Include="src\pathPainter.cpp" />
+    <ClCompile Include="src\simulation.cpp" />
+    <ClCompile Include="src\utilities.cpp" />
     <ClCompile Include="src\vectorPainter.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="inc\debugHelper.h" />
     <ClInclude Include="inc\display.h" />
+    <ClInclude Include="inc\displayInterface.h" />
+    <ClInclude Include="inc\distributionPlot.h" />
     <ClInclude Include="inc\drawable.h" />
+    <ClInclude Include="inc\drawableInterface.h" />
     <ClInclude Include="inc\eField.h" />
     <ClInclude Include="inc\graphicsUtilities.h" />
     <ClInclude Include="inc\particle.h" />
+    <ClInclude Include="inc\pathPainter.h" />
+    <ClInclude Include="inc\simulation.h" />
+    <ClInclude Include="inc\utilities.h" />
     <ClInclude Include="inc\vectorPainter.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

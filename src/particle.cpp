@@ -9,30 +9,19 @@ const double Particle::chargePerElectron = -1.602176e-19; // [C] = [As]
 const double Particle::massPerCharge = massPerElectron / chargePerElectron; // [kg/C] = [kg/As]
 
 
-Particle::Particle(/*const sf::Vector2u& size,
-				   const sf::Vector2f& spaceDimension*/)
-	//: m_eField(spaceDimension,size)
+Particle::Particle()
 {
 	setCharge(0);
-	setSize(10);
-	setDrag(0.5);
+	setSize(5);
+	setDrag(0.0);
 	setVelocity(sf::Vector2f(0, 0));
 	setStatic(false);
-	//setupField(size, spaceDimension);
+
 }
 Particle::~Particle()
 {
 
 }
-/*void Particle::setupField(const sf::Vector2u& size,
-				          const sf::Vector2f& spaceDimension)
-{
-	m_vecField.size = size;
-	m_vecField.spaceDimension = spaceDimension;
-	m_vecField.field.clear();
-
-	m_vecField.field = vector<vector<sf::Vector2f> >(size.x, vector<sf::Vector2f>(size.y, sf::Vector2f(0, 0)));
-}*/
 
 void Particle::setCharge(float q)
 {
@@ -55,8 +44,6 @@ float Particle::getSize() const
 void Particle::setStatic(bool enable)
 {
 	m_static = enable;
-	//if (!m_static)
-	//	m_lastPos = m_pos;
 }
 bool Particle::isStatic() const
 {
@@ -90,21 +77,12 @@ void Particle::boundryCollision()
 	m_pos -= m_deltaPos * 2.f;
 	m_velocity.x = 0;
 	m_velocity.y = 0;
-	//m_pos = m_lastPos;
+}
+const sf::Vector2f& Particle::getDeltaPos() const
+{
+	return m_deltaPos;
 }
 
-/*void Particle::calculateVectorField()
-{
-	for (size_t x = 0; x < m_eField.getGridSize().x; ++x)
-		for (size_t y = 0; y < m_eField.getGridSize().y; ++y)
-		{
-			sf::Vector2f sum(0, 0);
-			sf::Vector2f point((x * m_eField.getSpaceDimension().x) / m_eField.getGridSize().x,
-							   (y * m_eField.getSpaceDimension().y) / m_eField.getGridSize().y);
-
-			m_eField.setGridVector(sf::Vector2u(x,y),getFieldVector(point));
-		}
-}*/
 void Particle::calculatePhysiscs(const vector<Particle*>& particleList,
 								 float timeIntervalSec)
 {
@@ -121,17 +99,13 @@ void Particle::calculatePhysiscs(const vector<Particle*>& particleList,
 	{
 		eField = VectorMath::getNormalized(eField, 1000000000);
 	}
+	
 	sf::Vector2f force = eField * m_charge;
 
 	force -= force * m_drag;
 	sf::Vector2f acceleration = (float)(abs(m_charge) * massPerCharge) * force;
-
 	m_velocity += acceleration * timeIntervalSec;
-
-	//m_lastPos = m_pos;
 	m_deltaPos = m_velocity * timeIntervalSec;
-	
-	//std::cout << "vel: " << m_velocity.x << " " << m_velocity.y << "\n";
 }
 void Particle::applyPhysics()
 {
@@ -143,15 +117,12 @@ sf::Vector2f Particle::getFieldVector(const sf::Vector2f& point)
 	sf::Vector2f distanceVec = m_pos - point; // Vector from Particle to Point
 	float length = VectorMath::getLength(distanceVec);
 	if (length == 0)
-		return sf::Vector2f(0, 0);
+		return sf::Vector2f((float)(rand()%1000)/10.f, (float)(rand() % 1000) / 10.f);
 
 	float scalar = m_charge * E_PI_4 / (length * length);
 	return scalar * VectorMath::getNormalized(distanceVec);
 }
-/*sf::Vector2f Particle::getFieldVectorOfGrid(const sf::Vector2u& index)
-{
-	return m_eField.getGridVector(index);
-}*/
+
 
 void Particle::draw(sf::RenderWindow* window,
 					const sf::Vector2f& offset)
@@ -171,62 +142,3 @@ sf::Color Particle::getChargeColor(float charge)
 		return sf::Color(255, 0, 0);
 	return sf::Color(0, 0, 255);
 }
-
-/*
-void Particle::calculateField()
-{
-	for (Particle* p : m_particles)
-	{
-		p->calculateVectorField();
-	}
-	for (size_t x = 0; x < m_vectorGrid.size(); ++x)
-		for (size_t y = 0; y < m_vectorGrid[x].size(); ++y)
-		{
-			VectorPainter* vec = m_vectorGrid[x][y];
-			sf::Vector2f sum(0, 0);
-
-			for (Particle* p : m_particles)
-			{
-				sum += p->getFieldVectorOfGrid(sf::Vector2u(x,y));
-			}
-			//std::cout << "VectorLength: " << VectorMath::getLength(sum * m_vectorScale)<<"\n";
-			vec->setVector(sum * m_vectorScale);
-		}
-}*/
-
-/*void Particle::calculatePhysics(float timeIntervalSec)
-{
-	if (m_static)
-		return;
-
-
-	for (Particle* p : m_particles)
-	{
-		if (p->isStatic())
-			continue;
-		sf::Vector2f pos = p->getPos();
-		sf::Vector2i indexPos((m_gridSize.x*pos.x) / m_spaceDimension.x,
-							  (m_gridSize.y*pos.y) / m_spaceDimension.y);
-
-		if (indexPos.x >= m_gridSize.x ||
-			indexPos.y >= m_gridSize.y)
-		{
-			std::cout << "Error: position out of grid\n";
-			continue;
-		}
-
-		p->calculatePhysiscs(m_particles, timeIntervalSec);
-	}
-	//checkBounds();
-}*/
-/*void Particle::checkBounds()
-{
-	if (m_static)
-		return;
-	if (!(m_pos.x > 0 && m_pos.y > 0 &&
-		  m_pos.x < m_eField.getSpaceDimension().x && m_pos.x < m_eField.getSpaceDimension().y))
-	{
-		setVelocity(sf::Vector2f(0, 0));
-		goToLastPos();
-	}
-}*/

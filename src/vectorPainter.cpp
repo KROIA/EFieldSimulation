@@ -1,11 +1,11 @@
 #include "vectorPainter.h"
 
-
+float VectorPainter::m_maxLength = 1000000;
 VectorPainter::VectorPainter()
 {
 	setVector(VectorMath::getUnitVector());
 	setColor(sf::Color::White);
-	useLogScale(true,5);
+	setDisplayLength(10);
 }
 VectorPainter::~VectorPainter()
 {
@@ -31,15 +31,26 @@ const sf::Color& VectorPainter::getColor() const
 void VectorPainter::setVector(const sf::Vector2f vec)
 {
 	m_vector = vec;
+	m_length = VectorMath::getLength(m_vector);
 }
 void VectorPainter::setVector(float x, float y)
 {
 	m_vector.x = x;
 	m_vector.y = y;
+	m_length = VectorMath::getLength(m_vector);
 }
 const sf::Vector2f& VectorPainter::getVector() const
 {
 	return m_vector;
+}
+
+void VectorPainter::setDisplayLength(float length)
+{
+	m_displayLength = length;
+}
+float VectorPainter::getDisplayLength() const
+{
+	return m_displayLength;
 }
 
 void VectorPainter::norm(float normScale)
@@ -49,10 +60,11 @@ void VectorPainter::norm(float normScale)
 void VectorPainter::setLength(float length)
 {
 	norm(length);
+	m_length = length;
 }
 float VectorPainter::getLength() const
 {
-	return VectorMath::getLength(m_vector);
+	return m_length;
 }
 
 void VectorPainter::setAngle(float rad)
@@ -64,37 +76,32 @@ float VectorPainter::getAngle() const
 	return VectorMath::getAngle(m_vector);
 }
 
-void VectorPainter::useLogScale(bool enable, float scale)
+
+void VectorPainter::setMaxVectorLength(float length)
 {
-	m_useLogScale = enable;
-	m_logScale = 1;
-	if (scale != 0)
-		m_logScale = scale;
+	m_maxLength = length;
 }
-
-
 
 // Virtual Implementation
 void  VectorPainter::draw(sf::RenderWindow* window,
 						  const sf::Vector2f& offset)
 {
+	if (m_length == 0)
+		return;
 	const float arrowTipScale = 0.1f;
 	const float arrowTipAngle = 3.14159265 * 5.f/ 6.f;
 
 	float angle = getAngle();
-	float length = getLength();
 
-	sf::Vector2f normalizedVec = VectorMath::getNormalized(m_vector);
+	sf::Vector2f normalizedVec = VectorMath::getNormalized(m_vector, m_displayLength);
 
 	
 	//std::cout << length << "\n";
-	if (m_useLogScale)
-	{
-		length = log(1 + length) * log(m_logScale);
-	}
-	m_color = getColorFromSignal(length, 0, 35);
 
-	float arrowTipLength = arrowTipScale * length;
+	
+	m_color = getColorFromSignal(m_length, 0, m_maxLength);
+
+	float arrowTipLength = arrowTipScale * m_displayLength;
 	if (arrowTipLength < 2)
 		arrowTipLength = 2;
 
@@ -104,17 +111,17 @@ void  VectorPainter::draw(sf::RenderWindow* window,
 	sf::Vector2f arrowTip2 = 
 		VectorMath::getRotated(VectorMath::getUnitVector() * arrowTipLength,
 							   angle - arrowTipAngle);
-	normalizedVec *= length;
-	sf::Vertex line[] =
+	sf::Vector2f rotOffset = normalizedVec / 2.f;
+	sf::Vertex line[] = 
 	{
-		sf::Vertex(m_pos,m_color),
-		sf::Vertex(m_pos + normalizedVec,m_color),
+		sf::Vertex(m_pos - rotOffset,m_color),
+		sf::Vertex(m_pos + rotOffset,m_color),
 
-		sf::Vertex(m_pos + normalizedVec,m_color),
-		sf::Vertex(m_pos + normalizedVec + arrowTip1,m_color),
+		sf::Vertex(m_pos + rotOffset,m_color),
+		sf::Vertex(m_pos + rotOffset + arrowTip1,m_color),
 
-		sf::Vertex(m_pos + normalizedVec,m_color),
-		sf::Vertex(m_pos + normalizedVec + arrowTip2,m_color)
+		sf::Vertex(m_pos + rotOffset,m_color),
+		sf::Vertex(m_pos + rotOffset + arrowTip2,m_color)
 	};
 
 	window->draw(line, 6, sf::Lines);

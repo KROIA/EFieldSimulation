@@ -17,22 +17,26 @@ class VectorPainter : public Drawable
 	void setVector(float x, float y);
 	const sf::Vector2f& getVector() const;
 
+	void setDisplayLength(float length);
+	float getDisplayLength() const;
+
 	void norm(float normScale = 1);
 	void setLength(float length);
 	float getLength() const;
 	void setAngle(float rad);
 	float getAngle() const;
 
-	void useLogScale(bool enable, float scale = 1);
 
 	// Virtual Implementation
 	virtual void draw(sf::RenderWindow* window,
 					  const sf::Vector2f& offset = sf::Vector2f(0, 0));
 
+	static void setMaxVectorLength(float length);
 	protected:
 	sf::Color m_color;
 	sf::Vector2f m_vector;
+	float m_displayLength;
+	float m_length;
 
-	bool m_useLogScale;
-	float m_logScale;
+	static float m_maxLength;
 };

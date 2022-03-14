@@ -159,6 +159,7 @@
     <ClCompile Include="src\graphicsUtilities.cpp" />
     <ClCompile Include="src\particle.cpp" />
     <ClCompile Include="src\pathPainter.cpp" />
+    <ClCompile Include="src\shape.cpp" />
     <ClCompile Include="src\simulation.cpp" />
     <ClCompile Include="src\utilities.cpp" />
     <ClCompile Include="src\vectorPainter.cpp" />
@@ -174,6 +175,7 @@
     <ClInclude Include="inc\graphicsUtilities.h" />
     <ClInclude Include="inc\particle.h" />
     <ClInclude Include="inc\pathPainter.h" />
+    <ClInclude Include="inc\shape.h" />
     <ClInclude Include="inc\simulation.h" />
     <ClInclude Include="inc\utilities.h" />
     <ClInclude Include="inc\vectorPainter.h" />

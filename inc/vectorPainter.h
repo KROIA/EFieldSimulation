@@ -17,8 +17,10 @@ class VectorPainter : public Drawable
 	void setVector(float x, float y);
 	const sf::Vector2f& getVector() const;
 
-	void setDisplayLength(float length);
-	float getDisplayLength() const;
+	//void setDisplayLength(float length);
+	//float getDisplayLength() const;
+	void setOriginFactor(float factor);
+	float getOriginFactor() const;
 
 	void norm(float normScale = 1);
 	void setLength(float length);
@@ -31,12 +33,13 @@ class VectorPainter : public Drawable
 	virtual void draw(sf::RenderWindow* window,
 					  const sf::Vector2f& offset = sf::Vector2f(0, 0));
 
-	static void setMaxVectorLength(float length);
+	//static void setMaxVectorLength(float length);
 	protected:
 	sf::Color m_color;
 	sf::Vector2f m_vector;
-	float m_displayLength;
+	float m_originFactor;
+	//float m_displayLength;
 	float m_length;
 
-	static float m_maxLength;
+	//static float m_maxLength;
 };

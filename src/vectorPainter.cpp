@@ -1,11 +1,12 @@
 #include "vectorPainter.h"
 
-float VectorPainter::m_maxLength = 1000000;
+//float VectorPainter::m_maxLength = 1000000;
 VectorPainter::VectorPainter()
 {
 	setVector(VectorMath::getUnitVector());
 	setColor(sf::Color::White);
-	setDisplayLength(10);
+	setOriginFactor(0);
+	//setDisplayLength(10);
 }
 VectorPainter::~VectorPainter()
 {
@@ -44,13 +45,21 @@ const sf::Vector2f& VectorPainter::getVector() const
 	return m_vector;
 }
 
-void VectorPainter::setDisplayLength(float length)
+/*void VectorPainter::setDisplayLength(float length)
 {
 	m_displayLength = length;
 }
 float VectorPainter::getDisplayLength() const
 {
 	return m_displayLength;
+}*/
+void VectorPainter::setOriginFactor(float factor)
+{
+	m_originFactor = factor;
+}
+float VectorPainter::getOriginFactor() const
+{
+	return m_originFactor;
 }
 
 void VectorPainter::norm(float normScale)
@@ -69,7 +78,7 @@ float VectorPainter::getLength() const
 
 void VectorPainter::setAngle(float rad)
 {
-	m_vector = VectorMath::getRotated(m_vector, rad);
+	m_vector = VectorMath::setRotation(m_vector, rad);
 }
 float VectorPainter::getAngle() const
 {
@@ -77,10 +86,10 @@ float VectorPainter::getAngle() const
 }
 
 
-void VectorPainter::setMaxVectorLength(float length)
+/*void VectorPainter::setMaxVectorLength(float length)
 {
 	m_maxLength = length;
-}
+}*/
 
 // Virtual Implementation
 void  VectorPainter::draw(sf::RenderWindow* window,
@@ -93,35 +102,37 @@ void  VectorPainter::draw(sf::RenderWindow* window,
 
 	float angle = getAngle();
 
-	sf::Vector2f normalizedVec = VectorMath::getNormalized(m_vector, m_displayLength);
+	//sf::Vector2f normalizedVec = VectorMath::getNormalized(m_vector, m_displayLength);
 
 	
 	//std::cout << length << "\n";
 
 	
-	m_color = getColorFromSignal(m_length, 0, m_maxLength);
+	//m_color = getColorFromSignal(m_length, 0, m_maxLength);
 
-	float arrowTipLength = arrowTipScale * m_displayLength;
+	float arrowTipLength = arrowTipScale * m_length;
 	if (arrowTipLength < 2)
 		arrowTipLength = 2;
 
 	sf::Vector2f arrowTip1 = 
-		VectorMath::getRotated(VectorMath::getUnitVector() * arrowTipLength,
+		VectorMath::setRotation(VectorMath::getUnitVector() * arrowTipLength,
 							   angle + arrowTipAngle);
 	sf::Vector2f arrowTip2 = 
-		VectorMath::getRotated(VectorMath::getUnitVector() * arrowTipLength,
+		VectorMath::setRotation(VectorMath::getUnitVector() * arrowTipLength,
 							   angle - arrowTipAngle);
-	sf::Vector2f rotOffset = normalizedVec / 2.f;
+	sf::Vector2f rotOffset = m_vector * m_originFactor;
+	sf::Vector2f vecStart = m_pos - rotOffset;
+	sf::Vector2f vecEnd = vecStart + m_vector;
 	sf::Vertex line[] = 
 	{
-		sf::Vertex(m_pos - rotOffset,m_color),
-		sf::Vertex(m_pos + rotOffset,m_color),
+		sf::Vertex(vecStart,m_color),
+		sf::Vertex(vecEnd,m_color),
 
-		sf::Vertex(m_pos + rotOffset,m_color),
-		sf::Vertex(m_pos + rotOffset + arrowTip1,m_color),
+		sf::Vertex(vecEnd,m_color),
+		sf::Vertex(vecEnd + arrowTip1,m_color),
 
-		sf::Vertex(m_pos + rotOffset,m_color),
-		sf::Vertex(m_pos + rotOffset + arrowTip2,m_color)
+		sf::Vertex(vecEnd,m_color),
+		sf::Vertex(vecEnd + arrowTip2,m_color)
 	};
 
 	window->draw(line, 6, sf::Lines);

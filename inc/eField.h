@@ -15,6 +15,8 @@ class EField : public Drawable
 	~EField();
 
 	const EField& operator+=(const EField& other);
+
+	void setMaxVectorLength(float length);
 	
 	void setSpaceDimension(const sf::Vector2f& dim);
 	void setSpaceDimension(float x, float y);
@@ -60,6 +62,8 @@ class EField : public Drawable
 
 	sf::Vector2u m_gridSize;
 	sf::Vector2f m_spaceDimension;
+	float m_vectorLength;
+	float m_maxVectorLength;
 
 	vector<Particle*> m_particles;
 

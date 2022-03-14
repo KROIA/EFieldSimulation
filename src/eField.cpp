@@ -3,6 +3,7 @@
 EField::EField(const sf::Vector2f& dim,
 			   const sf::Vector2u& resolution)
 	: m_spaceDimension(dim)
+	, m_maxVectorLength(1000000)
 {
 	m_vectorGridColor = sf::Color(255, 255, 0);	
 	setGridSize(resolution);
@@ -26,6 +27,11 @@ const EField& EField::operator+=(const EField& other)
 										  other.m_vectorGrid[x][y]->getVector());
 	return *this;
 
+}
+
+void EField::setMaxVectorLength(float length)
+{
+	m_maxVectorLength = length;
 }
 
 void EField::setSpaceDimension(const sf::Vector2f& dim)
@@ -139,16 +145,14 @@ void EField::clearParticles()
 void EField::calculatePhysics(float timeIntervalSec)
 {
 	calculateField();
-	for (Particle* p : m_particles)
+	/*for (Particle* p : m_particles)
 	{
 		if (p->isStatic())
 			continue;
-		sf::Vector2f pos = p->getPos();
-
 		p->calculatePhysiscs(m_particles, timeIntervalSec);
 	}
 	applyPhysics();
-	checkParticleBounds();
+	checkParticleBounds();*/
 }
 void EField::draw(sf::RenderWindow* window,
 				  const sf::Vector2f& offset)
@@ -171,7 +175,7 @@ void EField::buildVectorGrid()
 {
 	sf::Vector2f vectorSpacing(m_spaceDimension.x / m_gridSize.x,
 							   m_spaceDimension.y / m_gridSize.y);
-	float vectorLength = VectorMath::getLength(vectorSpacing)/2.f;
+	m_vectorLength = VectorMath::getLength(vectorSpacing)/2.f;
 	m_vectorGrid.reserve(m_gridSize.x);
 	for (size_t x = 0; x < m_gridSize.x; ++x)
 	{
@@ -183,7 +187,8 @@ void EField::buildVectorGrid()
 			vector->setPos(vectorSpacing.x / 2.f + vectorSpacing.x * x,
 						   vectorSpacing.y / 2.f + vectorSpacing.y * y);
 			vector->setColor(m_vectorGridColor);
-			vector->setDisplayLength(vectorLength);
+			vector->setOriginFactor(0.5);
+			//vector->setDisplayLength(m_vectorLength);
 			m_vectorGrid[x].push_back(vector);
 		}
 	}
@@ -205,7 +210,11 @@ void EField::calculateField()
 			{
 				sum += p->getFieldVector(pos);
 			}
-			vec->setVector(sum);
+			if(sum.x == 0 && sum.y == 0)
+				vec->setVector(0,0);
+			else
+				vec->setVector(VectorMath::getNormalized(sum, m_vectorLength));
+			vec->setColor(getColorFromSignal(VectorMath::getLength(sum), 0, m_maxVectorLength));
 		}
 }
 

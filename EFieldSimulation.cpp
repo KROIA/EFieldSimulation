@@ -10,13 +10,15 @@
 void buildLevel_1(Simulation& sim);
 void buildLevel_2(Simulation& sim);
 void buildLevel_orbit(Simulation& sim);
+void buildLevel_shapes(Simulation& sim);
 
 int main()
 {
     Simulation simulation;
 	//buildLevel_1(simulation);
 	//buildLevel_2(simulation);
-	buildLevel_orbit(simulation);
+	//buildLevel_orbit(simulation);
+	buildLevel_shapes(simulation);
     simulation.start();
   
 }
@@ -133,4 +135,22 @@ void buildLevel_orbit(Simulation& sim)
 
 
 	sim.addParticle(particles);
+}
+
+void buildLevel_shapes(Simulation& sim)
+{
+	sf::Vector2f worldSize = sim.getWorldSize();
+	//vector<Shape*> shapes;
+
+	Shape* shape1 = new Shape;
+	shape1->setPos(worldSize / 2.f);
+	shape1->setRotation(PI/4.f);
+
+	Particle* particle = new Particle;
+	particle->setPos(shape1->getPos());
+	particle->setCharge(5);
+
+
+	sim.addParticle(particle);
+	sim.addShape(shape1);
 }

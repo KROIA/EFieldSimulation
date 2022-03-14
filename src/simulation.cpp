@@ -11,7 +11,7 @@ Simulation::Simulation()
 	
 	size_t gridX		= 100;
 	m_gridSize			= sf::Vector2u(gridX, 0);
-	VectorPainter::setMaxVectorLength(1e8);     
+	
 	m_startEmpty		= false;
 	m_particleArraySize = sf::Vector2u(50, 15);
 	m_particleCharges   = { 2 };
@@ -23,6 +23,7 @@ Simulation::Simulation()
 	m_mouseParticle.leftClickCharge = 100;
 	m_mouseParticle.rightClickCharge = -100;
 	m_eField->setVisible(true);
+	m_eField->setMaxVectorLength(1e8);
 }
 Simulation::~Simulation()
 {
@@ -50,17 +51,22 @@ void Simulation::stop()
 	m_display->exitLoop();
 }
 
+void Simulation::addParticle(Particle* particle)
+{
+	PathPainter* pathPainter = new PathPainter(particle);
+	m_pathPatiners.push_back(pathPainter);
+
+	m_eField->addParticle(particle);
+	m_eFieldParticles.push_back(particle);
+	m_particles.push_back(particle);
+	m_display->addDrawable(particle, RenderLayerIndex::paricle);
+	m_display->addDrawable(pathPainter, RenderLayerIndex::path);
+}
 void Simulation::addParticle(const vector<Particle*>& list)
 {
 	for (Particle* p : list)
 	{
-		PathPainter* pathPainter = new PathPainter(p);
-		m_pathPatiners.push_back(pathPainter);
-
-		m_eField->addParticle(p);
-		m_particles.push_back(p);
-		m_display->addDrawable(p, RenderLayerIndex::paricle);
-		m_display->addDrawable(pathPainter, RenderLayerIndex::path);
+		addParticle(p);
 	}
 }
 void Simulation::clearParticles()
@@ -68,13 +74,34 @@ void Simulation::clearParticles()
 	m_display->clearDrawable(RenderLayerIndex::paricle);
 	m_display->clearDrawable(RenderLayerIndex::path);
 	m_eField->clearParticles();
-	for (Particle* p : m_particles)
+	for (Particle* p : m_eFieldParticles)
 		delete p;
 	for (PathPainter* p : m_pathPatiners)
 		delete p;
+	m_eFieldParticles.clear();
 	m_particles.clear();
 	m_pathPatiners.clear();
 	m_eField->addParticle(m_mouseParticle.particle);
+	m_particles.push_back(m_mouseParticle.particle);
+}
+void Simulation::addShape(Shape* shape)
+{
+	m_display->addDrawable(shape, RenderLayerIndex::shape);
+	m_shapes.push_back(shape);
+}
+void Simulation::addShape(const vector<Shape*>& list)
+{
+	for (Shape* p : list)
+	{
+		addShape(p);
+	}
+}
+void Simulation::clearShapes()
+{
+	m_display->clearDrawable(RenderLayerIndex::shape);
+	for (Shape* p : m_shapes)
+		delete p;
+	m_shapes.clear();
 }
 
 const sf::Vector2f& Simulation::getWorldSize()
@@ -280,6 +307,7 @@ void Simulation::setup()
 		m_mouseParticle.particle = new Particle;
 		m_mouseParticle.particle->setCharge(0);
 		m_mouseParticle.particle->setStatic(true);
+		m_particles.push_back(m_mouseParticle.particle);
 		m_display->addDrawable(m_mouseParticle.particle, RenderLayerIndex::mouseParticle);
 		m_eField->addParticle(m_mouseParticle.particle);
 
@@ -289,7 +317,7 @@ void Simulation::setup()
 		{
 			float boarder = 20;
 			size_t counter = 0;
-			m_particles.reserve(m_particleArraySize.x * m_particleArraySize.y);
+			m_eFieldParticles.reserve(m_particleArraySize.x * m_particleArraySize.y);
 			for (size_t x = 0; x < m_particleArraySize.x; ++x)
 			{
 				for (size_t y = 0; y < m_particleArraySize.y; ++y)
@@ -312,9 +340,9 @@ void Simulation::clean()
 	m_display->clearDrawable();
 	m_eField->clearParticles();
 
-	for (Particle* p : m_particles)
+	for (Particle* p : m_eFieldParticles)
 		delete p;
-	m_particles.clear();
+	m_eFieldParticles.clear();
 
 	for (PathPainter* p : m_pathPatiners)
 		delete p;
@@ -331,9 +359,39 @@ void Simulation::clean()
 }
 void Simulation::simulate()
 {
-	m_eField->calculatePhysics(m_simulationTimeInterval);
+	calculatePhysics();
+	checkCollisions();
+	applyMovements();
 }
 
+void Simulation::calculatePhysics()
+{
+	m_eField->calculatePhysics(m_simulationTimeInterval);
+	for (Particle* p : m_particles)
+	{
+		if (p->isStatic())
+			continue;
+		p->calculatePhysiscs(m_particles, m_simulationTimeInterval);
+	}
+
+		
+	for (Shape* s : m_shapes)
+		s->calculatePhysics(m_simulationTimeInterval);
+}
+void Simulation::checkCollisions()
+{
+	for (Shape* s : m_shapes)
+		s->checkCollision(m_eFieldParticles);
+}
+void Simulation::applyMovements()
+{
+	for (Particle* p : m_eFieldParticles)
+	{
+		if (p->isStatic())
+			continue;
+		p->applyPhysics();
+	}
+}
 
 void Simulation::addParticle(const sf::Vector2f& spawnPos, float charge, bool isStatic)
 {
@@ -346,6 +404,7 @@ void Simulation::addParticle(const sf::Vector2f& spawnPos, float charge, bool is
 	m_pathPatiners.push_back(pathPainter);
 	
 	m_eField->addParticle(p);
+	m_eFieldParticles.push_back(p);
 	m_particles.push_back(p);
 	m_display->addDrawable(p,RenderLayerIndex::paricle);
 	m_display->addDrawable(pathPainter, RenderLayerIndex::path);
@@ -353,7 +412,7 @@ void Simulation::addParticle(const sf::Vector2f& spawnPos, float charge, bool is
 
 void Simulation::readDistribution(DistributionPlot* plot)
 {
-	vector<Particle*> particles = m_particles;
+	vector<Particle*> particles = m_eFieldParticles;
 	float offset;
 	float dim;
 	size_t div = plot->getXResolution();

@@ -1,4 +1,4 @@
-#include "graphicsUtilities.h"
+﻿#include "graphicsUtilities.h"
 
 
 sf::Color getColorFromSignal(float signal,
@@ -54,13 +54,17 @@ namespace VectorMath
 		return vec * normScale / length;;
 	}
 
-	float getLength(const sf::Vector2f& vec)
+	inline float getLength(const sf::Vector2f& vec)
 	{
 		return sqrt(vec.x * vec.x + vec.y * vec.y);
 	}
+	inline float getLengthSquare(const sf::Vector2f& vec)
+	{
+		return vec.x * vec.x + vec.y * vec.y;
+	}
 	float getAngle(const sf::Vector2f& vec)
 	{
-		static const float PI = 3.14159265;
+		
 
 		float rad;
 		float length = getLength(vec);
@@ -77,16 +81,62 @@ namespace VectorMath
 		}
 		return rad;
 	}
-	sf::Vector2f getRotated(sf::Vector2f vec, float rad)
+	sf::Vector2f setRotation(sf::Vector2f vec, float rad)
 	{
 		float length = getLength(vec);
 		vec.x = cos(rad) * length;
 		vec.y = sin(rad) * length;
 		return vec;
 	}
+	sf::Vector2f rotate(const sf::Vector2f& vec, float rad)
+	{
+		float currentAngle = getAngle(vec);
+		return setRotation(vec, currentAngle + rad);
+	}
 
 	sf::Vector2f getUnitVector()
 	{
 		return sf::Vector2f(1, 0);
 	}
+
+	inline void intersectionFactor(const sf::Vector2f& S1,
+								   const sf::Vector2f& S2,
+								   float& factor1,
+								   const sf::Vector2f& R1,
+								   const sf::Vector2f& R2,
+								   float& factor2,
+								   bool& doesCross)
+	{
+		// TI-Nspire code:
+		//  f1(s) := [[s1x][s1y]] + s * [[s2x][s2y]] ▸ Fertig
+		//	f2(t) := [[r1x][r1y]] + t * [[r2x][r2y]] ▸ Fertig
+		//	solve(f1(s) = f2(t), s, t)
+		//      ▸ s = ((−(r1x * r2y - r1y * r2x + r2x * s1y - r2y * s1x)) / (r2x * s2y - r2y * s2x)) 
+		//    and t = ((−(r1x * s2y - r1y * s2x - s1x * s2y + s1y * s2x)) / (r2x * s2y - r2y * s2x))
+
+		float discriminante = (R2.x * S2.y - R2.y * S2.x);
+		if (discriminante == 0)
+		{
+			doesCross = false;
+			return;
+		}
+		doesCross = true;
+		factor1 = -(R1.x * R2.y - R1.y * R2.x + R2.x * S1.y - R2.y * S1.x) / discriminante;
+		factor2 = -(R1.x * S2.y - R1.y * S2.x - S1.x * S2.y + S1.y * S2.x) / discriminante;
+	}
+
+	inline sf::Vector2f rotate90_clockwise(const sf::Vector2f& vec)
+	{
+		return sf::Vector2f(-vec.y, vec.x);
+	}
+	inline sf::Vector2f rotate90_counterClockwise(const sf::Vector2f& vec)
+	{
+		return sf::Vector2f(vec.y, -vec.x);
+	}
+	inline float dotProduct(const sf::Vector2f& v1,
+							const sf::Vector2f& v2)
+	{
+		return v1.x * v2.x + v1.y * v2.y;
+	}
+
 }

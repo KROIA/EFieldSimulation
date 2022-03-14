@@ -9,6 +9,7 @@
 #include "eField.h"
 #include "distributionPlot.h"
 #include "pathPainter.h"
+#include "shape.h"
 
 struct MouseParticle
 {
@@ -23,7 +24,8 @@ enum RenderLayerIndex
 	paricle = 1,
 	mouseParticle = 2,
 	path = 3,
-	plot = 4
+	shape = 4,
+	plot = 5
 };
 
 class Simulation : public DisplayInterface
@@ -34,8 +36,13 @@ class Simulation : public DisplayInterface
 
 	void start();
 	void stop();
+	void addParticle(Particle *particle);
 	void addParticle(const vector<Particle*>& list);
-	void clearParticles(); 
+	void clearParticles();
+
+	void addShape(Shape *shape);
+	void addShape(const vector<Shape*>& list);
+	void clearShapes();
 	const sf::Vector2f& getWorldSize();
 	const sf::Vector2u& getGridSize();
 	const sf::Vector2u& getWindowSize();
@@ -61,6 +68,10 @@ class Simulation : public DisplayInterface
 	void clean();
 	void simulate();
 
+	void calculatePhysics();
+	void checkCollisions();
+	void applyMovements();
+
 	void addParticle(const sf::Vector2f& spawnPos, float charge, bool isStatic = false);
 	void readDistribution(DistributionPlot* plot);
 	//void readDistributionY(DistributionPlot* plot);
@@ -79,8 +90,10 @@ class Simulation : public DisplayInterface
 	sf::Vector2u m_particleArraySize;
 	vector<float> m_particleCharges;
 	vector<Particle*> m_particles;
+	vector<Particle*> m_eFieldParticles;
 	vector<PathPainter*> m_pathPatiners;
-
+	vector<Shape*> m_shapes;
+	
 	
 	MouseParticle m_mouseParticle;
 };

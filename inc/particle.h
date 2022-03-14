@@ -26,6 +26,7 @@ class Particle	:	 public Drawable
 	void setDrag(float drag);
 	float getDrag() const;
 	void boundryCollision();
+	void setDeltaPos(const sf::Vector2f &deltaPos);
 	const sf::Vector2f& getDeltaPos() const;
 
 	void calculatePhysiscs(const vector<Particle*> &particleList,

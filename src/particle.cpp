@@ -78,6 +78,10 @@ void Particle::boundryCollision()
 	m_velocity.x = 0;
 	m_velocity.y = 0;
 }
+void Particle::setDeltaPos(const sf::Vector2f& deltaPos)
+{
+	m_deltaPos = deltaPos;
+}
 const sf::Vector2f& Particle::getDeltaPos() const
 {
 	return m_deltaPos;

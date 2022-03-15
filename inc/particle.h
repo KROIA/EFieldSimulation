@@ -25,6 +25,8 @@ class Particle	:	 public Drawable
 	const sf::Vector2f& getVelocity() const;
 	void setDrag(float drag);
 	float getDrag() const;
+	void setMaxVelocity(float vel);
+	float getMaxVelocity() const;
 	void boundryCollision();
 	void setDeltaPos(const sf::Vector2f &deltaPos);
 	const sf::Vector2f& getDeltaPos() const;
@@ -33,7 +35,7 @@ class Particle	:	 public Drawable
 						   float timeIntervalSec);
 	void applyPhysics();
 
-	sf::Vector2f getFieldVector(const sf::Vector2f& point);
+	sf::Vector2f getFieldVector(const sf::Vector2f& point) const;
 
 	virtual void draw(sf::RenderWindow* window,
 					  const sf::Vector2f& offset = sf::Vector2f(0, 0));
@@ -47,6 +49,11 @@ class Particle	:	 public Drawable
 	static const double chargePerElectron; // [C] = [As]
 	static const double massPerCharge; // [kg/C] = [kg/As]
 
+	static void setStandard_charge(float charge);
+	static void setStandard_size(float size);
+	static void setStandard_drag(float drag);
+	static void setStandard_maxVelocity(float velocity);
+
 	protected:
 	
 	float m_size; 
@@ -54,6 +61,15 @@ class Particle	:	 public Drawable
 	
 	bool m_static;
 	sf::Vector2f m_velocity;
+	float m_maxVelocitySquare;
 	float m_drag;
 	sf::Vector2f m_deltaPos;
+
+
+	static float m_standard_charge;
+	static float m_standard_size;
+	static float m_standard_drag;
+	static float m_standard_maxVelocity;
+
+	
 };

@@ -17,28 +17,33 @@ Shape::~Shape()
 
 }
 
-void Shape::setPoints(const vector<sf::Vertex>& points)
+void Shape::setPoints(const vector<sf::Vector2f>& points)
 {
 	if (points.size() < 3)
 	{
 		PRINT_ERROR("Vector of points need more points to define a shape.\nMinimum are 3 points")
 		return;
 	}
-	m_localPoints = points;
+	m_localPoints = vector<sf::Vertex>(points.size());
+	
+	for (size_t i=0; i<m_localPoints.size(); ++i)
+	{
+		m_localPoints[i].position = points[i];
+		m_localPoints[i].color = m_color;
+	}
 	if (m_localPoints[0].position != m_localPoints[m_localPoints.size() - 1].position)
 	{
 		m_localPoints.push_back(m_localPoints[0]);
 	}
-	for (sf::Vertex& v : m_localPoints)
-	{
-		v.color = m_color;
-	}
 	m_globalPoints = m_localPoints;
 	normalizeCenterOfMass();
 }
-const vector<sf::Vertex>& Shape::getPoints() const
+vector<sf::Vector2f> Shape::getPoints() const
 {
-	return m_localPoints;
+	vector<sf::Vector2f> list(m_localPoints.size());
+	for (size_t i = 0; i < m_localPoints.size(); ++i)
+		list[i] = m_localPoints[i].position;
+	return list;
 }
 
 /*void Shape::setOrigin(const sf::Vector2f& origin)
@@ -125,12 +130,17 @@ void Shape::checkCollision(const vector<Particle*>& particles)
 											   pointA, edgeVec, edgeScalar,
 											   doesCross);
 
-				float distanceToEdge = VectorMath::dotProduct(currentPos - pointA, normal);
+				sf::Vector2f vecA_to_currentPos = currentPos - pointA;
+				float distanceToEdge = VectorMath::dotProduct(vecA_to_currentPos, normal);
 
 				if (abs(distanceToEdge) < 2 )
 				{
-
-					sf::Vector2f normalOffset = (2-distanceToEdge )* normal;
+					if (VectorMath::getLengthSquare(vecA_to_currentPos - normal) >
+						VectorMath::getLengthSquare(vecA_to_currentPos + normal))
+					{
+						normal = -normal;
+					}
+					sf::Vector2f normalOffset = (2- abs(distanceToEdge))* normal;
 					currentMovingVector += normalOffset;
 					//if (edgeScalar < 0 || edgeScalar     > 1)
 					{
@@ -378,4 +388,45 @@ void Shape::normalizeCenterOfMass()
 	{
 		vertex.position -= massCenter;
 	}
+}
+
+
+
+const vector<sf::Vector2f> Shape::getGenerateRect(const sf::Vector2f& size)
+{
+	static vector<sf::Vector2f> rect(8);
+
+	sf::Vector2f middle = size / 2.f;
+	float defaultEdgeSize = 20;
+	float edgeSize = defaultEdgeSize;
+	if (middle.x / 2.f < defaultEdgeSize)
+	{
+		edgeSize = middle.x / 2.f;
+	}
+	else if (middle.y / 2.f < defaultEdgeSize)
+	{
+		edgeSize = middle.y / 2.f;
+	}
+
+	sf::Vector2f edgeTL = - middle;
+	sf::Vector2f edgeTR = sf::Vector2f(middle.x,-middle.y);
+	sf::Vector2f edgeBL = sf::Vector2f(-middle.x,middle.y);
+	sf::Vector2f edgeBR = middle;
+
+	sf::Vector2f edgeOffsetX(edgeSize, 0);
+	sf::Vector2f edgeOffsetY(0, edgeSize);
+
+	rect[0] = edgeTL + edgeOffsetX;
+	rect[1] = edgeTR - edgeOffsetX;
+
+	rect[2] = edgeTR + edgeOffsetY;
+	rect[3] = edgeBR - edgeOffsetY;
+
+	rect[4] = edgeBR - edgeOffsetX;
+	rect[5] = edgeBL + edgeOffsetX;
+
+	rect[6] = edgeBL - edgeOffsetY;
+	rect[7] = edgeTL + edgeOffsetY;
+
+	return rect;
 }

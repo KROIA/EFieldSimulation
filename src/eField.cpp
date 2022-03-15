@@ -33,6 +33,10 @@ void EField::setMaxVectorLength(float length)
 {
 	m_maxVectorLength = length;
 }
+float EField::getMaxVectorLength() const
+{
+	return m_maxVectorLength;
+}
 
 void EField::setSpaceDimension(const sf::Vector2f& dim)
 {
@@ -55,7 +59,11 @@ const sf::Vector2f& EField::getSpaceDimension() const
 void EField::setGridSize(const sf::Vector2u& size)
 {
 	if (size.x == 0 || size.y == 0)
+	{
+		PRINT_ERROR("Gridsize can't be 0 in any dimension")
 		return;
+	}
+		
 	m_gridSize = size;
 	clearVectorGrid();
 	buildVectorGrid();
@@ -63,7 +71,10 @@ void EField::setGridSize(const sf::Vector2u& size)
 void EField::setGridSize(size_t x, size_t y)
 {
 	if (x == 0 || y == 0)
-		return;
+	{
+		PRINT_ERROR("Gridsize can't be 0 in any dimension")
+			return;
+	}
 	m_gridSize.x = x;
 	m_gridSize.y = y;
 	clearVectorGrid();
@@ -91,7 +102,11 @@ void EField::setGridVector(const sf::Vector2u& index,
 				           const sf::Vector2f& vec)
 {
 	if (index.x >= m_gridSize.x || index.y >= m_gridSize.y)
-		return;
+	{
+		PRINT_ERROR("Index out of range: x = "+ std::to_string(index.x)+
+					" y = " + std::to_string(index.y))
+			return;
+	}
 	m_vectorGrid[index.x][index.y]->setVector(vec);
 }
 const sf::Vector2f& EField::getGridVector(const sf::Vector2u& index)
@@ -99,10 +114,11 @@ const sf::Vector2f& EField::getGridVector(const sf::Vector2u& index)
 	if (m_vectorGrid.size() >= index.x ||
 		m_vectorGrid[0].size() >= index.y)
 	{
-		PRINT_ERROR("Position out of grid");
+		PRINT_ERROR("Index out of range: x = " + std::to_string(index.x) +
+					" y = " + std::to_string(index.y))
 		return sf::Vector2f(0, 0);
 	}
-	return m_vectorGrid[index.x][index.y]->getVector();;
+	return m_vectorGrid[index.x][index.y]->getVector();
 }
 void EField::setVector(const sf::Vector2f& index,
 					   const sf::Vector2f& vec)

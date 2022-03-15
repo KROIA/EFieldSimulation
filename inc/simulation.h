@@ -1,8 +1,15 @@
 #pragma once
+//#define USE_THREADS
+
+#ifdef USE_THREADS
+#include <thread>
+#include <chrono>
+#endif
 
 // Display stuff
 #include "display.h"
 #include "displayInterface.h"
+#include "textPainter.h"
 
 // Simulation stuff
 #include "particle.h"
@@ -25,13 +32,41 @@ enum RenderLayerIndex
 	mouseParticle = 2,
 	path = 3,
 	shape = 4,
-	plot = 5
+	plot = 5,
+	text = 6
+};
+
+struct SimulationTimes
+{
+	TextPainter textPainter;
+	double ticksPerSecond;
+	double physicsTime;
+	double collisionTime;
+	double appyMovementTime;
+
+	double simulationTime;
+	double frameTime;
+	double eventTime;
+	double frameInterval;
 };
 
 class Simulation : public DisplayInterface
 {
 	public:
-	Simulation();
+	struct Settings
+	{
+		sf::Vector2u windowSize;
+		float targetFrameRate;
+		size_t gridSizeX;
+
+		float physicsTimeInterval;
+		float leftClickCharge;
+		float rightClickCharge;
+
+		float eField_maxVectorLength;
+
+	};
+	Simulation(const Settings &settings);
 	~Simulation();
 
 	void start();
@@ -69,15 +104,16 @@ class Simulation : public DisplayInterface
 	void simulate();
 
 	void calculatePhysics();
+	void calculatePhysicsThreaded(size_t particleIndex,size_t size);
 	void checkCollisions();
 	void applyMovements();
+	void updateInfoText();
 
 	void addParticle(const sf::Vector2f& spawnPos, float charge, bool isStatic = false);
 	void readDistribution(DistributionPlot* plot);
 	//void readDistributionY(DistributionPlot* plot);
 
 	bool m_simulationRunning;
-	bool m_startEmpty;
 	float m_simulationTimeInterval;
 	sf::Vector2u m_windowSize;
 	sf::Vector2f m_worldSize;
@@ -87,8 +123,6 @@ class Simulation : public DisplayInterface
 	vector<DistributionPlot*> m_distributionPlots;
 	EField* m_eField;
 
-	sf::Vector2u m_particleArraySize;
-	vector<float> m_particleCharges;
 	vector<Particle*> m_particles;
 	vector<Particle*> m_eFieldParticles;
 	vector<PathPainter*> m_pathPatiners;
@@ -96,4 +130,10 @@ class Simulation : public DisplayInterface
 	
 	
 	MouseParticle m_mouseParticle;
+
+	SimulationTimes m_simulationTimes;
+
+//#ifdef USE_THREADS
+//	vector<std::thread> m_threads;
+//#endif
 };

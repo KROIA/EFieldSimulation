@@ -13,8 +13,8 @@ class Shape : public Drawable
 	Shape();
 	~Shape();
 
-	void setPoints(const vector<sf::Vertex> &points);
-	const vector<sf::Vertex>& getPoints() const;
+	void setPoints(const vector<sf::Vector2f> &points);
+	vector<sf::Vector2f> getPoints() const;
 
 	//void setOrigin(const sf::Vector2f& origin);
 	//const sf::Vector2f& getOrigin() const;
@@ -31,6 +31,7 @@ class Shape : public Drawable
 	virtual void drawDebug(sf::RenderWindow* window,
 						   const sf::Vector2f& offset = sf::Vector2f(0, 0));
 
+	static const vector<sf::Vector2f> getGenerateRect(const sf::Vector2f& size);
 	protected:
 
 	void updateGlobalPoints();

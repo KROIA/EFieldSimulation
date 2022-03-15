@@ -1,33 +1,33 @@
 #include "simulation.h"
 
 
-Simulation::Simulation()
+
+Simulation::Simulation(const Settings& settings)
+	: m_simulationTimes({ TextPainter(),0,0,0,0,0,0,0 })
 {
-	m_windowSize		= sf::Vector2u(1900, 900)*2u;
+	m_windowSize		= settings.windowSize;
 	m_display			= new Display(m_windowSize, "E-Feld Simulation");
 	m_display->setSizeFixed(true);
-	m_display->frameRateTarget(30);
+	m_display->frameRateTarget(settings.targetFrameRate);
 	m_display->addSubscriber(this);
 	
-	size_t gridX		= 100;
-	m_gridSize			= sf::Vector2u(gridX, 0);
+	m_gridSize			= sf::Vector2u(settings.gridSizeX, 0);
 	
-	m_startEmpty		= false;
-	m_particleArraySize = sf::Vector2u(50, 15);
-	m_particleCharges   = { 2 };
-	//m_particleCharges   = { 2,-2 };
-	m_simulationTimeInterval = 5; // sec.
+	m_simulationTimeInterval = settings.physicsTimeInterval; // sec.
 
 	setup();
 
-	m_mouseParticle.leftClickCharge = 100;
-	m_mouseParticle.rightClickCharge = -100;
+	m_mouseParticle.leftClickCharge = settings.leftClickCharge;
+	m_mouseParticle.rightClickCharge = settings.rightClickCharge;
 	m_eField->setVisible(true);
-	m_eField->setMaxVectorLength(1e8);
+	m_eField->setMaxVectorLength(settings.eField_maxVectorLength);
+
+//#ifdef USE_THREADS
+//	m_threads.resize(std::thread::hardware_concurrency());
+//#endif
 }
 Simulation::~Simulation()
 {
-	delete m_display;
 	clean();
 }
 
@@ -35,14 +35,28 @@ Simulation::~Simulation()
 void Simulation::start()
 {
 	m_simulationRunning = true;
+	auto start = now();
+	auto frameIntervalTime = now();
 	while (m_display->isOpen() &&
 		   m_simulationRunning)
 	{
+
 		if (m_display->needsFrameUpdate())
 		{
+			auto simStart = now();
 			simulate();
+			auto simEnd = now();
 			m_display->processEvents();
+			auto events = now();
 			m_display->draw();
+			auto draw = now();
+			setFilteredValue(m_simulationTimes.simulationTime,milliseconds(simEnd - simStart),0.3);
+			setFilteredValue(m_simulationTimes.eventTime,milliseconds(events - simEnd), 0.3);
+			setFilteredValue(m_simulationTimes.frameTime,milliseconds(draw - events), 0.3);
+			setFilteredValue(m_simulationTimes.frameInterval,milliseconds(now() - frameIntervalTime), 0.3);
+			frameIntervalTime = now();
+
+			updateInfoText();
 		}
 	}
 }
@@ -156,6 +170,21 @@ void Simulation::onKeyPressEvent(const sf::Event& event)
 			//m_eField->setVisible(!m_eField->isVisible());
 			break;
 		}
+		case sf::Keyboard::Key::I:
+		{
+			m_simulationTimes.textPainter.setVisible(!m_simulationTimes.textPainter.isVisible());
+			break;
+		}
+		case sf::Keyboard::Key::Add:
+		{
+			m_eField->setMaxVectorLength(m_eField->getMaxVectorLength() * 0.75f);
+			break;
+		}
+		case sf::Keyboard::Key::Subtract:
+		{
+			m_eField->setMaxVectorLength(m_eField->getMaxVectorLength() * 1.5f);
+			break;
+		}
 	}
 }
 void Simulation::onKeyReleaseEvent(const sf::Event& event)
@@ -226,8 +255,8 @@ void Simulation::onMouseEvent(const sf::Event& event)
 			}
 			
 			
-			PRINT_MESSAGE("New Timeinterval: "<< m_simulationTimeInterval << "s\n")
-				break;
+			//PRINT_MESSAGE("New Timeinterval: "<< m_simulationTimeInterval << "s\n")
+			break;
 		}
 	}
 }
@@ -296,7 +325,7 @@ void Simulation::setup()
 
 	// E Field
 	{
-		m_gridSize.y = m_gridSize.x * m_worldSize.y / m_worldSize.x;
+		m_gridSize.y = m_gridSize.x * (m_worldSize.y / m_worldSize.x);
 		m_eField = new EField(m_worldSize, m_gridSize);
 		m_display->addDrawable(m_eField, RenderLayerIndex::eField);
 	}
@@ -310,29 +339,18 @@ void Simulation::setup()
 		m_particles.push_back(m_mouseParticle.particle);
 		m_display->addDrawable(m_mouseParticle.particle, RenderLayerIndex::mouseParticle);
 		m_eField->addParticle(m_mouseParticle.particle);
-
-		/*
-		// Particle Array
-		if(!m_startEmpty)
-		{
-			float boarder = 20;
-			size_t counter = 0;
-			m_eFieldParticles.reserve(m_particleArraySize.x * m_particleArraySize.y);
-			for (size_t x = 0; x < m_particleArraySize.x; ++x)
-			{
-				for (size_t y = 0; y < m_particleArraySize.y; ++y)
-				{
-					float cha = m_particleCharges[counter % m_particleCharges.size()];
-					sf::Vector2f pos(boarder + (float)x * (m_worldSize.x) / (float)m_particleArraySize.x,
-									 boarder + (float)y * (m_worldSize.y) / (float)m_particleArraySize.y);
-
-					addParticle(pos, cha);
-					++counter;
-				}
-			}
-		}*/
 	}
 
+	// Text
+	{
+		m_simulationTimes.textPainter.setColor(sf::Color(255, 255, 255));
+		m_simulationTimes.textPainter.setOrigin(TextPainter::Origin::topLeft);
+		m_simulationTimes.textPainter.setPos(sf::Vector2f(10,10));
+		m_simulationTimes.textPainter.setSize(m_windowSize.x / 100);
+		m_simulationTimes.textPainter.setVisible(false);
+
+		m_display->addDrawable(&m_simulationTimes.textPainter, RenderLayerIndex::text);
+	}
 	
 }
 void Simulation::clean()
@@ -352,6 +370,8 @@ void Simulation::clean()
 	m_mouseParticle.particle = nullptr;
 	delete m_eField;
 	m_eField = nullptr;
+	delete m_display;
+	m_display = nullptr;
 	for (DistributionPlot* p : m_distributionPlots)
 		delete p;
 	m_distributionPlots.clear();
@@ -359,25 +379,64 @@ void Simulation::clean()
 }
 void Simulation::simulate()
 {
+	auto start = now();
 	calculatePhysics();
+	auto phys = now();
 	checkCollisions();
+	auto coll = now();
 	applyMovements();
+	auto move = now();
+
+	setFilteredValue(m_simulationTimes.physicsTime     , milliseconds(phys - start),0.3);
+	setFilteredValue(m_simulationTimes.collisionTime   , milliseconds(coll - phys) ,0.3);
+	setFilteredValue(m_simulationTimes.appyMovementTime, milliseconds(move - coll) ,0.3);
 }
 
 void Simulation::calculatePhysics()
 {
 	m_eField->calculatePhysics(m_simulationTimeInterval);
 	m_eField->checkParticleBounds();
-	for (Particle* p : m_particles)
-	{
-		if (p->isStatic())
-			continue;
-		p->calculatePhysiscs(m_particles, m_simulationTimeInterval);
-	}
-
+	
+#ifdef USE_THREADS
+	//size_t threadCount = 6;
+	////vector<std::thread> threads;
+	////threads.reserve(threadCount);
+	//size_t size = m_particles.size() / threadCount;
+	//size_t rest = m_particles.size() - size * threadCount;
+	//size_t startIndex = 0;
+	//
+	//for (size_t i = 0; i < threadCount; ++i)
+	//{
+	//	m_threads[i].
+	//	threads.push_back(std::thread(&Simulation::calculatePhysicsThreaded, this, startIndex, size));
+	//	startIndex += size;
+	//}
+	//if(rest)
+	//	calculatePhysicsThreaded(startIndex, rest);
+	//
+	//for (std::thread& t : m_threads)
+	//{
+	//	t.join();
+	//}
+#else
+	calculatePhysicsThreaded(0, m_particles.size());
+#endif
 		
 	for (Shape* s : m_shapes)
 		s->calculatePhysics(m_simulationTimeInterval);
+}
+void Simulation::calculatePhysicsThreaded(size_t particleIndex, size_t size)
+{
+	size_t end = particleIndex + size;
+	if (end > m_particles.size())
+		end = m_particles.size();
+
+	for (size_t i = particleIndex; i < end; ++i)
+	{
+		if (m_particles[i]->isStatic())
+			continue;
+		m_particles[i]->calculatePhysiscs(m_particles, m_simulationTimeInterval);
+	}
 }
 void Simulation::checkCollisions()
 {
@@ -392,6 +451,27 @@ void Simulation::applyMovements()
 			continue;
 		p->applyPhysics();
 	}
+}
+void Simulation::updateInfoText()
+{
+	if (!m_simulationTimes.textPainter.isVisible())
+		return;
+	string text = "";
+	if (m_simulationTimes.frameInterval > 0)
+	{
+		text+= "TPS: "+  floatToString(1000.f / m_simulationTimes.frameInterval,3) + "\n";
+	}
+
+	text+= "physics delta t:  " + floatToString(m_simulationTimeInterval, 3) + " s\n";
+	text+= "Process time: \n";
+	text+= " physicsTime:      " + floatToString( m_simulationTimes.physicsTime, 3) + " ms\n";
+	text+= " collisionTime:    " + floatToString( m_simulationTimes.collisionTime, 3) + " ms\n";
+	text+= " appyMovementTime: " + floatToString( m_simulationTimes.appyMovementTime, 3) + " ms\n";
+	text+= " simulationTime:   " + floatToString( m_simulationTimes.simulationTime, 3) + " ms\n";
+	text+= " frameTime:        " + floatToString( m_simulationTimes.frameTime, 3) + " ms\n";
+	text+= " eventTime:        " + floatToString( m_simulationTimes.eventTime, 3) + " ms\n";
+	text+= " frameInterval:    " + floatToString( m_simulationTimes.frameInterval, 3) + " ms\n\n";
+	m_simulationTimes.textPainter.setText(text);
 }
 
 void Simulation::addParticle(const sf::Vector2f& spawnPos, float charge, bool isStatic)

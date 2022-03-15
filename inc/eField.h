@@ -17,6 +17,7 @@ class EField : public Drawable
 	const EField& operator+=(const EField& other);
 
 	void setMaxVectorLength(float length);
+	float getMaxVectorLength() const;
 	
 	void setSpaceDimension(const sf::Vector2f& dim);
 	void setSpaceDimension(float x, float y);

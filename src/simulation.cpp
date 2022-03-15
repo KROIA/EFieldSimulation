@@ -3,7 +3,7 @@
 
 Simulation::Simulation()
 {
-	m_windowSize		= sf::Vector2u(1900, 900);
+	m_windowSize		= sf::Vector2u(1900, 900)*2u;
 	m_display			= new Display(m_windowSize, "E-Feld Simulation");
 	m_display->setSizeFixed(true);
 	m_display->frameRateTarget(30);

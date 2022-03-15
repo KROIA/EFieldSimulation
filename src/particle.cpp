@@ -124,6 +124,7 @@ sf::Vector2f Particle::getFieldVector(const sf::Vector2f& point)
 		return sf::Vector2f((float)(rand()%1000)/10.f, (float)(rand() % 1000) / 10.f);
 
 	float scalar = m_charge * E_PI_4 / (length * length);
+	//float scalar = m_charge * E_PI_4 / (length);
 	return scalar * VectorMath::getNormalized(distanceVec);
 }
 

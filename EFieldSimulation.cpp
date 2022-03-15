@@ -10,6 +10,7 @@
 void buildLevel_1(Simulation& sim);
 void buildLevel_2(Simulation& sim);
 void buildLevel_orbit(Simulation& sim);
+void aufgabe_4_1(Simulation& sim);
 void buildLevel_shapes(Simulation& sim);
 
 int main()
@@ -17,6 +18,7 @@ int main()
     Simulation simulation;
 	//buildLevel_1(simulation);
 	//buildLevel_2(simulation);
+	//buildLevel_orbit(simulation);
 	//buildLevel_orbit(simulation);
 	buildLevel_shapes(simulation);
     simulation.start();
@@ -132,6 +134,34 @@ void buildLevel_orbit(Simulation& sim)
 	}
 	
 	particles.push_back(planet);
+
+
+	sim.addParticle(particles);
+}
+void aufgabe_4_1(Simulation& sim)
+{
+	sf::Vector2f worldSize = sim.getWorldSize();
+	vector<Particle*> particles;
+
+	Particle* left = new Particle;
+	left->setPos(worldSize / 2.f + sf::Vector2f(-400, 0));
+	left->setCharge(100);
+	left->setStatic(true);
+	left->setSize(20);
+
+	Particle* right = new Particle;
+	right->setPos(worldSize / 2.f + sf::Vector2f(400, 0));
+	right->setCharge(100);
+	right->setStatic(true);
+	right->setSize(20);
+
+	Particle* q = new Particle;
+	q->setPos(worldSize / 2.f + sf::Vector2f(0, -400));
+	q->setCharge(-200);
+	q->setStatic(false);
+	q->setSize(20);
+
+	particles = { left,right,q };
 
 
 	sim.addParticle(particles);

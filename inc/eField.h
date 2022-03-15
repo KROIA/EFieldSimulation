@@ -47,7 +47,7 @@ class EField : public Drawable
 					  const sf::Vector2f& offset = sf::Vector2f(0, 0));
 
 
-	
+	void checkParticleBounds();
 	protected:
 	void calculateField();
 	void applyPhysics();
@@ -56,7 +56,7 @@ class EField : public Drawable
 	void buildVectorGrid();
 
 	
-	void checkParticleBounds();
+	
 
 
 

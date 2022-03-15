@@ -367,6 +367,7 @@ void Simulation::simulate()
 void Simulation::calculatePhysics()
 {
 	m_eField->calculatePhysics(m_simulationTimeInterval);
+	m_eField->checkParticleBounds();
 	for (Particle* p : m_particles)
 	{
 		if (p->isStatic())

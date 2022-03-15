@@ -17,7 +17,7 @@ int main()
 {
     Simulation simulation;
 	//buildLevel_1(simulation);
-	//buildLevel_2(simulation);
+	//buildLevel_2(simulation); // Analysis Aufgabe
 	//buildLevel_orbit(simulation);
 	//buildLevel_orbit(simulation);
 	buildLevel_shapes(simulation);
@@ -171,16 +171,35 @@ void buildLevel_shapes(Simulation& sim)
 {
 	sf::Vector2f worldSize = sim.getWorldSize();
 	//vector<Shape*> shapes;
+	float scale = 500;
 
 	Shape* shape1 = new Shape;
-	shape1->setPos(worldSize / 2.f);
-	shape1->setRotation(PI/4.f);
+	shape1->setPos(worldSize / 2.f + sf::Vector2f(-600,0));
 
-	Particle* particle = new Particle;
-	particle->setPos(shape1->getPos());
-	particle->setCharge(5);
+	vector<sf::Vertex> points;
+	size_t numPoints = 5;
+	for (size_t i = 0; i < numPoints; ++i)
+	{
+		sf::Vertex v;
+		v.position = VectorMath::setRotation(VectorMath::getUnitVector() * scale, i*2 * PI / (float)numPoints);
+		points.push_back(v);
+	}
+
+	shape1->setPoints(points);
+	//shape1->setRotation(PI/4.f);
+	
+
+	Shape* shape2 = new Shape;
+	shape2->setPos(worldSize / 2.f + sf::Vector2f(600, 0));
+	shape2->setPoints(points);
+	shape2->setRotation(PI / 2.f);
+
+	//Particle* particle = new Particle;
+	//particle->setPos(shape1->getPos());
+	//particle->setCharge(5);
 
 
-	sim.addParticle(particle);
+	//sim.addParticle(particle);
 	sim.addShape(shape1);
+	sim.addShape(shape2);
 }

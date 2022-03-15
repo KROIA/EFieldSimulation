@@ -10,7 +10,7 @@ Shape::Shape()
 		VectorMath::rotate(scale*VectorMath::getUnitVector(),PI * 4.f / 6.f),
 		VectorMath::rotate(scale*VectorMath::getUnitVector(),PI * 8.f / 6.f)
 	});
-	setDrawDebug(true);
+	//setDrawDebug(true);
 }
 Shape::~Shape()
 {
@@ -119,17 +119,35 @@ void Shape::checkCollision(const vector<Particle*>& particles)
 
 				bool doesCross;
 				float particleScalar, edgeScalar;
+			
+				sf::Vector2f normal = VectorMath::rotate90_clockwise(VectorMath::getNormalized(edgeVec));
 				VectorMath::intersectionFactor(currentPos, currentMovingVector, particleScalar,
 											   pointA, edgeVec, edgeScalar,
 											   doesCross);
 
+				float distanceToEdge = VectorMath::dotProduct(currentPos - pointA, normal);
+
+				if (abs(distanceToEdge) < 2 )
+				{
+
+					sf::Vector2f normalOffset = (2-distanceToEdge )* normal;
+					currentMovingVector += normalOffset;
+					//if (edgeScalar < 0 || edgeScalar     > 1)
+					{
+						p->setDeltaPos(currentMovingVector);
+						//continue;
+					}
+				}
+				
 				if (!doesCross)
 					continue; // Go to next line of this shape
 
+				
+
 				// Check if they intersect
-				float margin = 0;
+				float margin = 1;
 				if (particleScalar < 0 || particleScalar > 1 ||
-					edgeScalar < -margin || edgeScalar     > 1+ margin)
+					edgeScalar < -margin || edgeScalar     > 1 + margin)
 					continue; // They do not intersect
 
 				// They do intersect
@@ -138,6 +156,11 @@ void Shape::checkCollision(const vector<Particle*>& particles)
 				//   Ajust the targeted moving vector of the particle
 				//currentMovingVector *= (particleScalar - 0.1f);
 				sf::Vector2f newMovingVec = currentMovingVector * (particleScalar - 0.01f);
+				/*if (VectorMath::getLength(currentMovingVector) > 0.2 && particleScalar > 0.2)
+				{
+					newMovingVec += normal;
+				}*/
+				
 
 				// Calculate the new speed vector
 				// Calculate the paralell velocity component to the edge of the shape
@@ -161,7 +184,7 @@ void Shape::checkCollision(const vector<Particle*>& particles)
 					// Add some movement in the direction of the edge
 					sf::Vector2f additionalMove = sqareNormalEdge * deltaMoveDotProduct;
 					
-					/*
+					
 					sf::Vector2f additionalMoveStartPos = currentPos + newMovingVec;
 
 					// Check neighbour edges
@@ -188,7 +211,7 @@ void Shape::checkCollision(const vector<Particle*>& particles)
 								if (doesCross1)
 								{
 									// Check if they intersect
-									float margin1 = 0;
+									float margin1 = 0.1;
 									if (particleScalar1 < 0 || particleScalar1 > 1 ||
 										edgeScalar1 < -margin1 || edgeScalar1     > 1 + margin1)
 									{
@@ -197,6 +220,12 @@ void Shape::checkCollision(const vector<Particle*>& particles)
 									{
 										neighbourMatch = true;
 										additionalMove *= (particleScalar1 - 0.01f);
+										//velocity = sf::Vector2f(0, 0);
+										float edgeLengthSquare1 = VectorMath::getLengthSquare(edgeVec1);
+										float velocityDotProduct1 = VectorMath::dotProduct(velocity, edgeVec1);
+										sf::Vector2f sqareNormalEdge1 = edgeVec1 / edgeLengthSquare1;
+
+										velocity = sqareNormalEdge1 * velocityDotProduct1; // Projection on the edge
 									}
 								}
 							}
@@ -204,6 +233,7 @@ void Shape::checkCollision(const vector<Particle*>& particles)
 
 							if (!neighbourMatch)
 							{
+								//neighbourStartIndex = (i + 1) % m_globalPoints.size();
 								sf::Vector2f pointA1 = m_globalPoints[neighbourStartIndex].position;
 								sf::Vector2f pointB1 = m_globalPoints[neighbourStartIndex + 1].position;
 								sf::Vector2f edgeVec1 = pointB1 - pointA1;
@@ -216,7 +246,7 @@ void Shape::checkCollision(const vector<Particle*>& particles)
 								if (doesCross1)
 								{
 									// Check if they intersect
-									float margin1 = 0;
+									float margin1 = 0.1;
 									if (particleScalar1 < 0 || particleScalar1 > 1 ||
 										edgeScalar1 < -margin1 || edgeScalar1     > 1 + margin1)
 									{
@@ -225,22 +255,28 @@ void Shape::checkCollision(const vector<Particle*>& particles)
 									{
 										neighbourMatch = true;
 										additionalMove *= (particleScalar1 - 0.01f);
+										//velocity = sf::Vector2f(0, 0);
+										float edgeLengthSquare1 = VectorMath::getLengthSquare(edgeVec1);
+										float velocityDotProduct1 = VectorMath::dotProduct(velocity, edgeVec1);
+										sf::Vector2f sqareNormalEdge1 = edgeVec1 / edgeLengthSquare1;
+
+										velocity = sqareNormalEdge1 * velocityDotProduct1; // Projection on the edge
 									}
 								}
 							}
-							if (!neighbourMatch)
-								std::cout << "no neighbour\n";
+							//if (!neighbourMatch)
+							//	std::cout << "no neighbour\n";
 						}
-					}*/
+					}
 					
-					//newMovingVec += additionalMove;
+					newMovingVec += additionalMove;
+				
 				}
-
 
 
 				p->setVelocity(velocity);
 				p->setDeltaPos(newMovingVec);
-				reCheckCollision = true;
+				//reCheckCollision = true;
 
 				if (m_drawDebug)
 				{

@@ -12,8 +12,8 @@ const double Particle::massPerCharge = massPerElectron / chargePerElectron; // [
 Particle::Particle()
 {
 	setCharge(0);
-	setSize(5);
-	setDrag(0.0);
+	setSize(10);
+	setDrag(0.5);
 	setVelocity(sf::Vector2f(0, 0));
 	setStatic(false);
 

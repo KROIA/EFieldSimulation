@@ -23,11 +23,11 @@ int main()
 	// Particle::setStandard_maxVelocity(10000);
 
 	Simulation::Settings settings;
-	//settings.windowSize				= sf::Vector2u(1900, 900)*2u;
-	settings.windowSize				= sf::Vector2u(1900, 900);
+	settings.windowSize				= sf::Vector2u(1900, 900)*2u;
+	//settings.windowSize				= sf::Vector2u(1900, 900);
 	settings.targetFrameRate		= 60;
-	settings.gridSizeX				= 100;
-	settings.physicsTimeInterval	= 0.5; // sec
+	settings.gridSizeX				= settings.windowSize.x/19;
+	settings.physicsTimeInterval	= 5; // sec
 	settings.leftClickCharge		= 100;
 	settings.rightClickCharge		= -100;
 	settings.eField_maxVectorLength	= 1e7;
@@ -230,9 +230,10 @@ void buildLevel_influence(Simulation& sim)
 	sf::Vector2f worldSize = sim.getWorldSize();
 	sf::Vector2f middlePoint = worldSize / 2.f;
 
-	sf::Vector2u grid(15, 4);
+	float gab = 100;
 	sf::Vector2f spacing(50, 25);
-	float gab = 200;
+	sf::Vector2u grid((middlePoint.x- gab-100) / spacing.x, 4);
+	
 	float charge = 5;
 
 	vector<Particle*> particles;
@@ -287,16 +288,19 @@ void buildLevel_influence(Simulation& sim)
 
 void buildLevel_spread(Simulation& sim)
 {
+	sf::Vector2f worldSize = sim.getWorldSize();
+	sf::Vector2f center = worldSize / 2.f;
+
+
 	float charge = 2;
 
 	float largeRadius = 350;
 	float smallRadius = 20;
-	float spacing = 1300; // Space between the center of the circles
+	float spacing = worldSize.x-(largeRadius+ smallRadius+50); // Space between the center of the circles
 
 	size_t pointCount = 20;
 
-	sf::Vector2f worldSize = sim.getWorldSize();
-	sf::Vector2f center = worldSize / 2.f;
+	
 	sf::Vector2f centerOffset(spacing / 2.f, 0);
 	vector<sf::Vector2f> points;
 	vector<Particle*> particles;

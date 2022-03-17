@@ -35,7 +35,7 @@ class Particle	:	 public Drawable
 						   float timeIntervalSec);
 	void applyPhysics();
 
-	sf::Vector2f getFieldVector(const sf::Vector2f& point) const;
+	inline sf::Vector2f getFieldVector(const sf::Vector2f& point) const;
 
 	virtual void draw(sf::RenderWindow* window,
 					  const sf::Vector2f& offset = sf::Vector2f(0, 0));

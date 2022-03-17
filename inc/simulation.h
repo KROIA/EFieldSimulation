@@ -1,9 +1,11 @@
 #pragma once
 //#define USE_THREADS
+#define SYNC_WITH_DISPLAY
 
 #ifdef USE_THREADS
 #include <thread>
 #include <chrono>
+#include <condition_variable>
 #endif
 
 // Display stuff
@@ -66,6 +68,17 @@ class Simulation : public DisplayInterface
 		float eField_maxVectorLength;
 
 	};
+#ifdef USE_THREADS
+	struct ThreadData
+	{
+		size_t index;
+		size_t threadsCunt;
+		size_t particleCount;
+
+		bool doLoop;
+		bool workDone;
+	};
+#endif
 	Simulation(const Settings &settings);
 	~Simulation();
 
@@ -104,7 +117,9 @@ class Simulation : public DisplayInterface
 	void simulate();
 
 	void calculatePhysics();
-	void calculatePhysicsThreaded(size_t particleIndex,size_t size);
+#ifdef USE_THREADS
+	void calculatePhysicsThreaded(size_t index, ThreadData* data);
+#endif
 	void checkCollisions();
 	void applyMovements();
 	void updateInfoText();
@@ -133,7 +148,18 @@ class Simulation : public DisplayInterface
 
 	SimulationTimes m_simulationTimes;
 
-//#ifdef USE_THREADS
-//	vector<std::thread> m_threads;
-//#endif
+#ifdef USE_THREADS
+
+	vector<std::thread*> m_threads;
+	vector<ThreadData> m_threadData;
+
+	std::condition_variable m_thread_cv;
+	std::condition_variable m_thread_cv2;
+	std::mutex m_thread_mutex;
+	std::mutex m_thread_mutex2;
+	
+	static size_t m_threadSyncCounter;
+	static size_t m_threadSyncCounterTarget;
+	static size_t m_counter;
+#endif
 };

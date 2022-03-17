@@ -1,5 +1,5 @@
 #pragma once
-
+#define IGNORE_MATH_CHECK
 
 #include <iostream>
 #include <SFML/Graphics.hpp>
@@ -15,13 +15,13 @@ sf::Color getColorFromSignal(float signal,
 
 namespace VectorMath
 {
-	sf::Vector2f getNormalized(sf::Vector2f vec, float normScale = 1);
+	extern inline sf::Vector2f getNormalized(const sf::Vector2f &vec, float normScale = 1);
 	extern inline float getLength(const sf::Vector2f& vec);
 	extern inline float getLengthSquare(const sf::Vector2f& vec);
-	float getAngle(const sf::Vector2f& vec);
-	sf::Vector2f setRotation(sf::Vector2f vec, float rad);
-	sf::Vector2f rotate(const sf::Vector2f &vec, float rad);
-	sf::Vector2f getUnitVector();
+	extern inline float getAngle(const sf::Vector2f& vec);
+	extern inline sf::Vector2f setRotation(sf::Vector2f vec, float rad);
+	extern inline sf::Vector2f rotate(const sf::Vector2f &vec, float rad);
+	extern inline sf::Vector2f getUnitVector();
 	
 
 	// Gets 2 scalars and a bool for the given 4 Points

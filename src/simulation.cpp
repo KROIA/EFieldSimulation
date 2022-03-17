@@ -1,7 +1,11 @@
 #include "simulation.h"
 
 
-
+#ifdef USE_THREADS
+size_t Simulation::m_threadSyncCounter = 0;
+size_t Simulation::m_threadSyncCounterTarget = 1;
+size_t Simulation::m_counter = 0;
+#endif
 Simulation::Simulation(const Settings& settings)
 	: m_simulationTimes({ TextPainter(),0,0,0,0,0,0,0 })
 {
@@ -22,9 +26,25 @@ Simulation::Simulation(const Settings& settings)
 	m_eField->setVisible(true);
 	m_eField->setMaxVectorLength(settings.eField_maxVectorLength);
 
-//#ifdef USE_THREADS
-//	m_threads.resize(std::thread::hardware_concurrency());
-//#endif
+#ifdef USE_THREADS
+	m_threadData.resize(std::thread::hardware_concurrency());
+	m_threads.resize(std::thread::hardware_concurrency());
+	m_threadSyncCounterTarget = m_threads.size();
+
+	//m_threadSyncCounter = 0;
+	//m_threadSyncCounterTarget = 1;
+	for (size_t i = 0; i < std::thread::hardware_concurrency(); ++i)
+	{
+		ThreadData data;
+		data.threadsCunt = std::thread::hardware_concurrency();
+		data.index = i;
+		data.particleCount = 0;
+		data.doLoop = true;
+		data.workDone = false;
+		m_threadData[i] = data;
+		m_threads[i] = new std::thread(&Simulation::calculatePhysicsThreaded, this, i, &m_threadData[i]);
+	}
+#endif
 }
 Simulation::~Simulation()
 {
@@ -37,6 +57,8 @@ void Simulation::start()
 	m_simulationRunning = true;
 	auto start = now();
 	auto frameIntervalTime = now();
+	auto tpsStart = now();
+#ifdef SYNC_WITH_DISPLAY
 	while (m_display->isOpen() &&
 		   m_simulationRunning)
 	{
@@ -50,15 +72,47 @@ void Simulation::start()
 			auto events = now();
 			m_display->draw();
 			auto draw = now();
+			setFilteredValue(m_simulationTimes.ticksPerSecond, milliseconds(simEnd - tpsStart), 0.3);
 			setFilteredValue(m_simulationTimes.simulationTime,milliseconds(simEnd - simStart),0.3);
 			setFilteredValue(m_simulationTimes.eventTime,milliseconds(events - simEnd), 0.3);
 			setFilteredValue(m_simulationTimes.frameTime,milliseconds(draw - events), 0.3);
 			setFilteredValue(m_simulationTimes.frameInterval,milliseconds(now() - frameIntervalTime), 0.3);
 			frameIntervalTime = now();
+			tpsStart = simEnd;
 
 			updateInfoText();
 		}
 	}
+#else
+	
+	while (m_display->isOpen() &&
+		   m_simulationRunning)
+	{
+		auto simStart = now();
+		simulate();
+		auto simEnd = now();
+		
+		setFilteredValue(m_simulationTimes.ticksPerSecond, milliseconds(simEnd - tpsStart), 0.3);
+		setFilteredValue(m_simulationTimes.simulationTime, milliseconds(simEnd - simStart), 0.3);
+		tpsStart = simEnd;
+
+		if (m_display->needsFrameUpdate())
+		{
+			
+			m_display->processEvents();
+			auto events = now();
+			m_display->draw();
+			auto draw = now();
+			
+			setFilteredValue(m_simulationTimes.eventTime, milliseconds(events - simEnd), 0.3);
+			setFilteredValue(m_simulationTimes.frameTime, milliseconds(draw - events), 0.3);
+			setFilteredValue(m_simulationTimes.frameInterval, milliseconds(now() - frameIntervalTime), 0.3);
+			frameIntervalTime = now();
+
+			updateInfoText();
+		}
+	}
+#endif
 }
 void Simulation::stop() 
 {
@@ -396,48 +450,152 @@ void Simulation::calculatePhysics()
 {
 	m_eField->calculatePhysics(m_simulationTimeInterval);
 	m_eField->checkParticleBounds();
-	
-#ifdef USE_THREADS
-	//size_t threadCount = 6;
-	////vector<std::thread> threads;
-	////threads.reserve(threadCount);
-	//size_t size = m_particles.size() / threadCount;
-	//size_t rest = m_particles.size() - size * threadCount;
-	//size_t startIndex = 0;
-	//
-	//for (size_t i = 0; i < threadCount; ++i)
-	//{
-	//	m_threads[i].
-	//	threads.push_back(std::thread(&Simulation::calculatePhysicsThreaded, this, startIndex, size));
-	//	startIndex += size;
-	//}
-	//if(rest)
-	//	calculatePhysicsThreaded(startIndex, rest);
-	//
-	//for (std::thread& t : m_threads)
-	//{
-	//	t.join();
-	//}
-#else
-	calculatePhysicsThreaded(0, m_particles.size());
-#endif
-		
-	for (Shape* s : m_shapes)
-		s->calculatePhysics(m_simulationTimeInterval);
-}
-void Simulation::calculatePhysicsThreaded(size_t particleIndex, size_t size)
-{
-	size_t end = particleIndex + size;
-	if (end > m_particles.size())
-		end = m_particles.size();
 
-	for (size_t i = particleIndex; i < end; ++i)
+#ifdef USE_THREADS
+	/*size_t threadCount = 6;
+	vector<std::thread*> threads(threadCount);
+	//threads.reserve(threadCount);
+	size_t size = m_particles.size() / threadCount;
+	size_t rest = m_particles.size() - size * threadCount;
+	size_t startIndex = 0;
+	
+	for (size_t i = 0; i < threadCount; ++i)
+	{
+		//m_threads[i].
+		threads[i] = new std::thread(&Simulation::calculatePhysicsThreaded, this, i, size);
+	}
+	if(rest)
+		calculatePhysicsThreaded(threadCount, rest);
+	
+	for (std::thread* t : threads)
+	{
+		t->join();
+		delete t;
+	}*/
+	{
+		std::unique_lock<std::mutex> lck(m_thread_mutex);
+		m_threadSyncCounter = 1;
+		m_thread_cv.notify_all();
+	}
+	
+	//++m_threadSyncCounterTarget;
+	for (m_counter = 0; m_counter < m_threadData.size(); ++m_counter)
+	{
+		{
+			std::unique_lock<std::mutex> lock(m_thread_mutex2);
+			m_thread_cv2.wait(lock, [this]() { return m_threadData[m_counter].workDone; });
+		}
+	}
+	/*size_t doneCount = 0;
+	while (doneCount != m_threadData.size())
+	{
+		doneCount = 0;
+		for (size_t i = 0; i < m_threadData.size(); ++i)
+		{
+			doneCount += m_threadData[i].workDone;
+		}
+	}*/
+	
+	for (size_t i = 0; i < m_threadData.size(); ++i)
+	{
+		m_threadData[i].workDone = false;
+		m_threadData[i].particleCount = m_particles.size();
+	}
+	{
+		std::unique_lock<std::mutex> lck(m_thread_mutex);
+		m_threadSyncCounter = 0;
+		m_thread_cv.notify_all();
+	}
+	
+
+#else
+	size_t size = m_particles.size();
+	for (size_t i = 0; i < size; ++i)
 	{
 		if (m_particles[i]->isStatic())
 			continue;
 		m_particles[i]->calculatePhysiscs(m_particles, m_simulationTimeInterval);
 	}
+#endif
+	for (Shape* s : m_shapes)
+		s->calculatePhysics(m_simulationTimeInterval);
 }
+#ifdef USE_THREADS
+void Simulation::calculatePhysicsThreaded(size_t index, ThreadData *data)
+{
+	if (!data)
+		return;
+
+	bool doLoop = true;
+	size_t targetCounter = 1;
+
+	size_t size = data->particleCount / data->threadsCunt;
+	size_t start = index * size;
+	size_t end = start + size;
+	size_t rest = data->particleCount - size * data->threadsCunt;
+
+	while (doLoop)
+	{
+
+		{
+			std::unique_lock<std::mutex> lk(m_thread_mutex);
+			//m_thread_cv.wait(lk, targetCounter == m_threadSyncCounter);
+			m_thread_cv.wait(lk, [] {return m_threadSyncCounter; });
+			
+		}
+		doLoop = data->doLoop;
+		//++targetCounter;
+		//{
+		//	std::unique_lock<std::mutex> lk(m_thread_mutex);
+		//	++m_threadSyncCounterTarget;
+		//}
+		size = data->particleCount / data->threadsCunt;
+		start = index * size;
+		end = start + size;
+		if (index == data->threadsCunt - 1)
+		{
+			rest = data->particleCount - size * data->threadsCunt;
+			end += rest;
+		}
+		
+		for (size_t i = start; i < end; ++i)
+		{
+			if (m_particles[i]->isStatic())
+				continue;
+			m_particles[i]->calculatePhysiscs(m_particles, m_simulationTimeInterval);
+		}
+		{
+			//std::unique_lock<std::mutex> lock(m_thread_mutex2);
+			data->workDone = true;
+		}
+		
+
+		{
+			std::unique_lock<std::mutex> lk(m_thread_mutex);
+			//m_thread_cv.wait(lk, targetCounter == m_threadSyncCounter);
+			m_thread_cv.wait(lk, [] {return !m_threadSyncCounter; });
+
+		}
+		//++m_threadSyncCounterTarget;
+	}
+
+
+
+
+	/*
+	size_t start = index * size;
+	size_t end = start + size;
+	if (end > m_particles.size())
+		end = m_particles.size();
+
+	for (size_t i = start; i < end; ++i)
+	{
+		if (m_particles[i]->isStatic())
+			continue;
+		m_particles[i]->calculatePhysiscs(m_particles, m_simulationTimeInterval);
+	}*/
+}
+#endif
 void Simulation::checkCollisions()
 {
 	for (Shape* s : m_shapes)
@@ -459,7 +617,7 @@ void Simulation::updateInfoText()
 	string text = "";
 	if (m_simulationTimes.frameInterval > 0)
 	{
-		text+= "TPS: "+  floatToString(1000.f / m_simulationTimes.frameInterval,3) + "\n";
+		text+= "TPS: "+  floatToString(1000.f / m_simulationTimes.ticksPerSecond,3) + "\n";
 	}
 
 	text+= "physics delta t:  " + floatToString(m_simulationTimeInterval, 3) + " s\n";

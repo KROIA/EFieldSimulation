@@ -105,8 +105,8 @@ const sf::Vector2f& Particle::getDeltaPos() const
 void Particle::calculatePhysiscs(const vector<Particle*>& particleList,
 								 float timeIntervalSec)
 {
-	if (m_static)
-		return;
+//	if (m_static)
+//		return;
 	sf::Vector2f eField(0, 0);
 	for (Particle *p : particleList)
 	{
@@ -141,15 +141,15 @@ void Particle::applyPhysics()
 	m_pos += m_deltaPos;
 }
 
-sf::Vector2f Particle::getFieldVector(const sf::Vector2f& point) const
+inline sf::Vector2f Particle::getFieldVector(const sf::Vector2f& point) const
 {
 	sf::Vector2f distanceVec = m_pos - point; // Vector from Particle to Point
-	float length = VectorMath::getLength(distanceVec);
-	if (length == 0)
+	float lengthSquare = VectorMath::getLengthSquare(distanceVec);
+	if (lengthSquare == 0)
 		return sf::Vector2f((float)(rand()%1000)/10.f, (float)(rand() % 1000) / 10.f);
 
-	float scalar = m_charge * E_PI_4 / (length * length);
-	//float scalar = m_charge * E_PI_4 / (length);
+	float scalar = m_charge * E_PI_4 / (lengthSquare);
+
 	return scalar * VectorMath::getNormalized(distanceVec);
 }
 

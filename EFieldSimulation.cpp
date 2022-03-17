@@ -14,6 +14,7 @@ void aufgabe_4_1(Simulation& sim);
 void buildLevel_shapes(Simulation& sim);
 void buildLevel_influence(Simulation& sim);
 void buildLevel_spread(Simulation& sim);
+void buildLevel_spread2(Simulation& sim);
 
 int main()
 {
@@ -23,8 +24,8 @@ int main()
 	// Particle::setStandard_maxVelocity(10000);
 
 	Simulation::Settings settings;
-	settings.windowSize				= sf::Vector2u(1900, 900)*2u;
-	//settings.windowSize				= sf::Vector2u(1900, 900);
+	//settings.windowSize				= sf::Vector2u(1900, 900)*2u;
+	settings.windowSize				= sf::Vector2u(1900, 900);
 	settings.targetFrameRate		= 60;
 	settings.gridSizeX				= settings.windowSize.x/19;
 	settings.physicsTimeInterval	= 5; // sec
@@ -41,6 +42,7 @@ int main()
 	//buildLevel_shapes(simulation);
 	buildLevel_influence(simulation);
 	//buildLevel_spread(simulation);
+	//buildLevel_spread2(simulation);
     simulation.start();
 	return 0;
 }
@@ -234,7 +236,8 @@ void buildLevel_influence(Simulation& sim)
 	sf::Vector2f spacing(50, 25);
 	sf::Vector2u grid((middlePoint.x- gab-100) / spacing.x, 4);
 	
-	float charge = 5;
+	float chargeA = 5;
+	float chargeB = -5;
 
 	vector<Particle*> particles;
 	
@@ -250,7 +253,7 @@ void buildLevel_influence(Simulation& sim)
 			sf::Vector2f pos1 = sartPosPositive + sf::Vector2f(x * spacing.x, y * spacing.y);
 			Particle* particle1 = new Particle;
 			particle1->setPos(pos1);
-			particle1->setCharge(charge);
+			particle1->setCharge(chargeA);
 			particle1->setStatic(false);
 			particles.push_back(particle1);
 
@@ -258,7 +261,7 @@ void buildLevel_influence(Simulation& sim)
 			sf::Vector2f pos2 = sartPosNegative + sf::Vector2f(x * spacing.x, y * spacing.y);
 			Particle* particle2 = new Particle;
 			particle2->setPos(pos2);
-			particle2->setCharge(-charge);
+			particle2->setCharge(chargeB);
 			particle2->setStatic(false);
 			particles.push_back(particle2);
 		}
@@ -296,7 +299,7 @@ void buildLevel_spread(Simulation& sim)
 
 	float largeRadius = 350;
 	float smallRadius = 20;
-	float spacing = worldSize.x-(largeRadius+ smallRadius+50); // Space between the center of the circles
+	float spacing = worldSize.x-(largeRadius+ smallRadius+100); // Space between the center of the circles
 
 	size_t pointCount = 20;
 
@@ -344,5 +347,63 @@ void buildLevel_spread(Simulation& sim)
 	shape->setPoints(points);
 
 	sim.addShape(shape);
+	sim.addParticle(particles);
+}
+void buildLevel_spread2(Simulation& sim)
+{
+	sf::Vector2f worldSize = sim.getWorldSize();
+	sf::Vector2f middlePoint = worldSize / 2.f;
+
+	sf::Vector2f spacing(50, 25);
+	sf::Vector2u grid((worldSize.x - 200) / spacing.x, 4);
+
+	float charge = 5;
+
+	vector<Particle*> particles;
+
+	sf::Vector2f sartPosPositive = middlePoint + sf::Vector2f(-(grid.x * spacing.x)/ 2.f,
+															  -(grid.y * spacing.y / 2.f));
+	//sf::Vector2f sartPosNegative = middlePoint + sf::Vector2f(gab / 2.f, -(grid.y * spacing.y / 2.f));
+
+
+	for (size_t x = 0; x < grid.x; ++x)
+	{
+		for (size_t y = 0; y < grid.y; ++y)
+		{
+			sf::Vector2f pos1 = sartPosPositive + sf::Vector2f(x * spacing.x, y * spacing.y);
+			Particle* particle1 = new Particle;
+			particle1->setPos(pos1);
+			particle1->setCharge(charge);
+			particle1->setStatic(false);
+			particles.push_back(particle1);
+
+
+	/*		sf::Vector2f pos2 = sartPosNegative + sf::Vector2f(x * spacing.x, y * spacing.y);
+			Particle* particle2 = new Particle;
+			particle2->setPos(pos2);
+			particle2->setCharge(-charge);
+			particle2->setStatic(false);
+			particles.push_back(particle2);*/
+		}
+	}
+
+
+	sf::Vector2f rectSize((grid.x + 1) * spacing.x,
+						  (grid.y + 1) * spacing.y);
+	vector<sf::Vector2f> rectPoints = Shape::getGenerateRect(rectSize);
+
+
+	Shape* shape1 = new Shape;
+	shape1->setPos(sartPosPositive + rectSize / 2.f - spacing);
+	shape1->setPoints(rectPoints);
+	//shape2->setRotation(PI / 2.f);
+	/*
+	Shape* shape2 = new Shape;
+	shape2->setPos(sartPosNegative + rectSize / 2.f - spacing);
+	shape2->setPoints(rectPoints);
+	//shape2->setRotation(PI / 2.f);*/
+
+	sim.addShape(shape1);
+	//sim.addShape(shape2);
 	sim.addParticle(particles);
 }

@@ -143,7 +143,7 @@ void Particle::applyPhysics()
 
 inline sf::Vector2f Particle::getFieldVector(const sf::Vector2f& point) const
 {
-	sf::Vector2f distanceVec = m_pos - point; // Vector from Particle to Point
+	sf::Vector2f distanceVec = m_pos - point; // Vector from Point to Particle
 	float lengthSquare = VectorMath::getLengthSquare(distanceVec);
 	if (lengthSquare == 0)
 		return sf::Vector2f((float)(rand()%1000)/10.f, (float)(rand() % 1000) / 10.f);

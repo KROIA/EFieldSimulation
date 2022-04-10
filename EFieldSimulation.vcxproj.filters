@@ -30,7 +30,7 @@
     <ClCompile Include="src\vectorPainter.cpp">
       <Filter>Quelldateien</Filter>
     </ClCompile>
-    <ClCompile Include="src\particle.cpp">
+    <ClCompile Include="src\chargeParticle.cpp">
       <Filter>Quelldateien</Filter>
     </ClCompile>
     <ClCompile Include="src\eField.cpp">
@@ -60,6 +60,12 @@
     <ClCompile Include="src\textPainter.cpp">
       <Filter>Quelldateien</Filter>
     </ClCompile>
+    <ClCompile Include="src\particle.cpp">
+      <Filter>Quelldateien</Filter>
+    </ClCompile>
+    <ClCompile Include="src\controlledParticle.cpp">
+      <Filter>Quelldateien</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="inc\display.h">
@@ -74,7 +80,7 @@
     <ClInclude Include="inc\vectorPainter.h">
       <Filter>Headerdateien</Filter>
     </ClInclude>
-    <ClInclude Include="inc\particle.h">
+    <ClInclude Include="inc\chargeParticle.h">
       <Filter>Headerdateien</Filter>
     </ClInclude>
     <ClInclude Include="inc\eField.h">
@@ -105,6 +111,12 @@
       <Filter>Headerdateien</Filter>
     </ClInclude>
     <ClInclude Include="inc\textPainter.h">
+      <Filter>Headerdateien</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\particle.h">
+      <Filter>Headerdateien</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\controlledParticle.h">
       <Filter>Headerdateien</Filter>
     </ClInclude>
   </ItemGroup>

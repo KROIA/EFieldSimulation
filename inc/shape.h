@@ -1,7 +1,7 @@
 #pragma once
 
 #include <vector>
-#include "particle.h"
+#include "chargeParticle.h"
 #include "drawable.h"
 #include "vectorPainter.h"
 
@@ -23,7 +23,7 @@ class Shape : public Drawable
 	float getRotation() const;
 
 	void calculatePhysics(float deltaTime);
-	void checkCollision(const vector<Particle*>& particles);
+	void checkCollision(const vector<ChargeParticle*>& ChargeParticles);
 
 	virtual void draw(sf::RenderWindow* window,
 					  const sf::Vector2f& offset = sf::Vector2f(0, 0));

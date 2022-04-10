@@ -1,9 +1,11 @@
 #pragma once
 //#define USE_THREADS
+#define SYNC_WITH_DISPLAY
 
 #ifdef USE_THREADS
 #include <thread>
 #include <chrono>
+#include <condition_variable>
 #endif
 
 // Display stuff
@@ -12,15 +14,16 @@
 #include "textPainter.h"
 
 // Simulation stuff
-#include "particle.h"
+#include "chargeParticle.h"
 #include "eField.h"
 #include "distributionPlot.h"
 #include "pathPainter.h"
 #include "shape.h"
+#include "controlledParticle.h"
 
-struct MouseParticle
+struct MouseChargeParticle
 {
-	Particle* particle;
+	ChargeParticle* ChargeParticle;
 
 	float leftClickCharge;
 	float rightClickCharge;
@@ -29,7 +32,7 @@ enum RenderLayerIndex
 {
 	eField = 0,
 	paricle = 1,
-	mouseParticle = 2,
+	mouseChargeParticle = 2,
 	path = 3,
 	shape = 4,
 	plot = 5,
@@ -66,14 +69,25 @@ class Simulation : public DisplayInterface
 		float eField_maxVectorLength;
 
 	};
+#ifdef USE_THREADS
+	struct ThreadData
+	{
+		size_t index;
+		size_t threadsCunt;
+		size_t ChargeParticleCount;
+
+		bool doLoop;
+		bool workDone;
+	};
+#endif
 	Simulation(const Settings &settings);
 	~Simulation();
 
 	void start();
 	void stop();
-	void addParticle(Particle *particle);
-	void addParticle(const vector<Particle*>& list);
-	void clearParticles();
+	void addChargeParticle(ChargeParticle *ChargeParticle);
+	void addChargeParticle(const vector<ChargeParticle*>& list);
+	void clearChargeParticles();
 
 	void addShape(Shape *shape);
 	void addShape(const vector<Shape*>& list);
@@ -104,12 +118,14 @@ class Simulation : public DisplayInterface
 	void simulate();
 
 	void calculatePhysics();
-	void calculatePhysicsThreaded(size_t particleIndex,size_t size);
+#ifdef USE_THREADS
+	void calculatePhysicsThreaded(size_t index, ThreadData* data);
+#endif
 	void checkCollisions();
 	void applyMovements();
 	void updateInfoText();
 
-	void addParticle(const sf::Vector2f& spawnPos, float charge, bool isStatic = false);
+	void addChargeParticle(const sf::Vector2f& spawnPos, float charge, bool isStatic = false);
 	void readDistribution(DistributionPlot* plot);
 	//void readDistributionY(DistributionPlot* plot);
 
@@ -123,17 +139,32 @@ class Simulation : public DisplayInterface
 	vector<DistributionPlot*> m_distributionPlots;
 	EField* m_eField;
 
-	vector<Particle*> m_particles;
-	vector<Particle*> m_eFieldParticles;
+	vector<ChargeParticle*> m_ChargeParticles;
+	vector<ChargeParticle*> m_eFieldChargeParticles;
 	vector<PathPainter*> m_pathPatiners;
 	vector<Shape*> m_shapes;
-	
-	
-	MouseParticle m_mouseParticle;
+
+
+	ControlledParticle* m_controlledParticle;
+	PathPainter *m_cPath;
+
+	MouseChargeParticle m_mouseChargeParticle;
 
 	SimulationTimes m_simulationTimes;
+	
 
-//#ifdef USE_THREADS
-//	vector<std::thread> m_threads;
-//#endif
+#ifdef USE_THREADS
+
+	vector<std::thread*> m_threads;
+	vector<ThreadData> m_threadData;
+
+	std::condition_variable m_thread_cv;
+	std::condition_variable m_thread_cv2;
+	std::mutex m_thread_mutex;
+	std::mutex m_thread_mutex2;
+	
+	static size_t m_threadSyncCounter;
+	static size_t m_threadSyncCounterTarget;
+	static size_t m_counter;
+#endif
 };

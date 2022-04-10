@@ -1,7 +1,7 @@
 #pragma once
 
 #include "drawable.h"
-#include "particle.h"
+#include "chargeParticle.h"
 #include "vectorPainter.h"
 #include <vector>
 
@@ -39,16 +39,16 @@ class EField : public Drawable
 				   const sf::Vector2f& vec);
 	const sf::Vector2f& getVector(const sf::Vector2f& index);
 
-	void addParticle(Particle* p);
-	void removeParticle(Particle* p);
-	void clearParticles();
+	void addChargeParticle(ChargeParticle* p);
+	void removeChargeParticle(ChargeParticle* p);
+	void clearChargeParticles();
 
 	void calculatePhysics(float timeIntervalSec);
 	virtual void draw(sf::RenderWindow* window,
 					  const sf::Vector2f& offset = sf::Vector2f(0, 0));
 
 
-	void checkParticleBounds();
+	void checkChargeParticleBounds();
 	protected:
 	void calculateField();
 	void applyPhysics();
@@ -66,7 +66,7 @@ class EField : public Drawable
 	float m_vectorLength;
 	float m_maxVectorLength;
 
-	vector<Particle*> m_particles;
+	vector<ChargeParticle*> m_ChargeParticles;
 
 	sf::Color m_vectorGridColor;
 	vector < vector<VectorPainter* > >m_vectorGrid;

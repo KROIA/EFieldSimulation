@@ -44,13 +44,15 @@ sf::Color getColorFromSignal(float signal,
 
 namespace VectorMath
 {
-	sf::Vector2f getNormalized(sf::Vector2f vec, float normScale)
+	inline sf::Vector2f getNormalized(const sf::Vector2f& vec, float normScale)
 	{
 		float length = getLength(vec);
+#ifndef IGNORE_MATH_CHECK
 		if (length == 0)
 		{
 			return getUnitVector() * normScale;
 		}
+#endif
 		return vec * normScale / length;;
 	}
 
@@ -62,7 +64,7 @@ namespace VectorMath
 	{
 		return vec.x * vec.x + vec.y * vec.y;
 	}
-	float getAngle(const sf::Vector2f& vec)
+	inline float getAngle(const sf::Vector2f& vec)
 	{
 		
 
@@ -81,20 +83,20 @@ namespace VectorMath
 		}
 		return rad;
 	}
-	sf::Vector2f setRotation(sf::Vector2f vec, float rad)
+	inline sf::Vector2f setRotation(sf::Vector2f vec, float rad)
 	{
 		float length = getLength(vec);
 		vec.x = cos(rad) * length;
 		vec.y = sin(rad) * length;
 		return vec;
 	}
-	sf::Vector2f rotate(const sf::Vector2f& vec, float rad)
+	inline sf::Vector2f rotate(const sf::Vector2f& vec, float rad)
 	{
 		float currentAngle = getAngle(vec);
 		return setRotation(vec, currentAngle + rad);
 	}
 
-	sf::Vector2f getUnitVector()
+	inline sf::Vector2f getUnitVector()
 	{
 		return sf::Vector2f(1, 0);
 	}

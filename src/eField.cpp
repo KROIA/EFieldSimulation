@@ -134,41 +134,41 @@ const sf::Vector2f& EField::getVector(const sf::Vector2f& index)
 	return getGridVector(uIndex);
 }
 
-void EField::addParticle(Particle* p)
+void EField::addChargeParticle(ChargeParticle* p)
 {
-	for (size_t i = 0; i < m_particles.size(); ++i)
-		if (m_particles[i] == p)
+	for (size_t i = 0; i < m_ChargeParticles.size(); ++i)
+		if (m_ChargeParticles[i] == p)
 			return;
-	m_particles.push_back(p);
+	m_ChargeParticles.push_back(p);
 }
 
-void EField::removeParticle(Particle* p)
+void EField::removeChargeParticle(ChargeParticle* p)
 {
-	for (size_t i = 0; i < m_particles.size(); ++i)
-		if (m_particles[i] == p)
+	for (size_t i = 0; i < m_ChargeParticles.size(); ++i)
+		if (m_ChargeParticles[i] == p)
 		{
-			m_particles.erase(m_particles.begin() + i);
+			m_ChargeParticles.erase(m_ChargeParticles.begin() + i);
 			return;
 		}
 }
 
-void EField::clearParticles()
+void EField::clearChargeParticles()
 {
-	m_particles.clear();
+	m_ChargeParticles.clear();
 }
 
 
 void EField::calculatePhysics(float timeIntervalSec)
 {
 	calculateField();
-	/*for (Particle* p : m_particles)
+	/*for (ChargeParticle* p : m_ChargeParticles)
 	{
 		if (p->isStatic())
 			continue;
-		p->calculatePhysiscs(m_particles, timeIntervalSec);
+		p->calculatePhysiscs(m_ChargeParticles, timeIntervalSec);
 	}
 	applyPhysics();
-	checkParticleBounds();*/
+	checkChargeParticleBounds();*/
 }
 void EField::draw(sf::RenderWindow* window,
 				  const sf::Vector2f& offset)
@@ -222,7 +222,7 @@ void EField::calculateField()
 			sf::Vector2f sum(0, 0);
 			sf::Vector2f pos = vec->getPos();
 
-			for (Particle* p : m_particles)
+			for (ChargeParticle* p : m_ChargeParticles)
 			{
 				sum += p->getFieldVector(pos);
 			}
@@ -237,16 +237,16 @@ void EField::calculateField()
 
 void EField::applyPhysics()
 {
-	for (Particle* p : m_particles)
+	for (ChargeParticle* p : m_ChargeParticles)
 	{
 		if (p->isStatic())
 			continue;
 		p->applyPhysics();
 	}
 }
-void EField::checkParticleBounds()
+void EField::checkChargeParticleBounds()
 {
-	for (Particle* p : m_particles)
+	for (ChargeParticle* p : m_ChargeParticles)
 	{
 		if (p->isStatic())
 			continue;

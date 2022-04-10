@@ -1,7 +1,11 @@
 #include "simulation.h"
 
 
-
+#ifdef USE_THREADS
+size_t Simulation::m_threadSyncCounter = 0;
+size_t Simulation::m_threadSyncCounterTarget = 1;
+size_t Simulation::m_counter = 0;
+#endif
 Simulation::Simulation(const Settings& settings)
 	: m_simulationTimes({ TextPainter(),0,0,0,0,0,0,0 })
 {
@@ -17,14 +21,39 @@ Simulation::Simulation(const Settings& settings)
 
 	setup();
 
-	m_mouseParticle.leftClickCharge = settings.leftClickCharge;
-	m_mouseParticle.rightClickCharge = settings.rightClickCharge;
+	m_mouseChargeParticle.leftClickCharge = settings.leftClickCharge;
+	m_mouseChargeParticle.rightClickCharge = settings.rightClickCharge;
 	m_eField->setVisible(true);
 	m_eField->setMaxVectorLength(settings.eField_maxVectorLength);
 
-//#ifdef USE_THREADS
-//	m_threads.resize(std::thread::hardware_concurrency());
-//#endif
+	m_controlledParticle = new ControlledParticle;
+	m_controlledParticle->setPos(sf::Vector2f(m_windowSize) / 4.f+sf::Vector2f(300,500));
+	m_controlledParticle->setVelocity(sf::Vector2f(1, 0));
+	m_cPath = new PathPainter(m_controlledParticle);
+	m_cPath->setPathLength(1000);
+	m_display->addDrawable(m_controlledParticle);
+	m_display->addDrawable(m_cPath);
+	
+
+#ifdef USE_THREADS
+	m_threadData.resize(std::thread::hardware_concurrency());
+	m_threads.resize(std::thread::hardware_concurrency());
+	m_threadSyncCounterTarget = m_threads.size();
+
+	//m_threadSyncCounter = 0;
+	//m_threadSyncCounterTarget = 1;
+	for (size_t i = 0; i < std::thread::hardware_concurrency(); ++i)
+	{
+		ThreadData data;
+		data.threadsCunt = std::thread::hardware_concurrency();
+		data.index = i;
+		data.ChargeParticleCount = 0;
+		data.doLoop = true;
+		data.workDone = false;
+		m_threadData[i] = data;
+		m_threads[i] = new std::thread(&Simulation::calculatePhysicsThreaded, this, i, &m_threadData[i]);
+	}
+#endif
 }
 Simulation::~Simulation()
 {
@@ -37,6 +66,8 @@ void Simulation::start()
 	m_simulationRunning = true;
 	auto start = now();
 	auto frameIntervalTime = now();
+	auto tpsStart = now();
+#ifdef SYNC_WITH_DISPLAY
 	while (m_display->isOpen() &&
 		   m_simulationRunning)
 	{
@@ -50,53 +81,85 @@ void Simulation::start()
 			auto events = now();
 			m_display->draw();
 			auto draw = now();
+			setFilteredValue(m_simulationTimes.ticksPerSecond, milliseconds(simEnd - tpsStart), 0.3);
 			setFilteredValue(m_simulationTimes.simulationTime,milliseconds(simEnd - simStart),0.3);
 			setFilteredValue(m_simulationTimes.eventTime,milliseconds(events - simEnd), 0.3);
 			setFilteredValue(m_simulationTimes.frameTime,milliseconds(draw - events), 0.3);
 			setFilteredValue(m_simulationTimes.frameInterval,milliseconds(now() - frameIntervalTime), 0.3);
 			frameIntervalTime = now();
+			tpsStart = simEnd;
 
 			updateInfoText();
 		}
 	}
+#else
+	
+	while (m_display->isOpen() &&
+		   m_simulationRunning)
+	{
+		auto simStart = now();
+		simulate();
+		auto simEnd = now();
+		
+		setFilteredValue(m_simulationTimes.ticksPerSecond, milliseconds(simEnd - tpsStart), 0.3);
+		setFilteredValue(m_simulationTimes.simulationTime, milliseconds(simEnd - simStart), 0.3);
+		tpsStart = simEnd;
+
+		if (m_display->needsFrameUpdate())
+		{
+			
+			m_display->processEvents();
+			auto events = now();
+			m_display->draw();
+			auto draw = now();
+			
+			setFilteredValue(m_simulationTimes.eventTime, milliseconds(events - simEnd), 0.3);
+			setFilteredValue(m_simulationTimes.frameTime, milliseconds(draw - events), 0.3);
+			setFilteredValue(m_simulationTimes.frameInterval, milliseconds(now() - frameIntervalTime), 0.3);
+			frameIntervalTime = now();
+
+			updateInfoText();
+		}
+	}
+#endif
 }
 void Simulation::stop() 
 {
 	m_display->exitLoop();
 }
 
-void Simulation::addParticle(Particle* particle)
+void Simulation::addChargeParticle(ChargeParticle* ChargeParticle)
 {
-	PathPainter* pathPainter = new PathPainter(particle);
+	PathPainter* pathPainter = new PathPainter(ChargeParticle);
 	m_pathPatiners.push_back(pathPainter);
 
-	m_eField->addParticle(particle);
-	m_eFieldParticles.push_back(particle);
-	m_particles.push_back(particle);
-	m_display->addDrawable(particle, RenderLayerIndex::paricle);
+	m_eField->addChargeParticle(ChargeParticle);
+	m_eFieldChargeParticles.push_back(ChargeParticle);
+	m_ChargeParticles.push_back(ChargeParticle);
+	m_display->addDrawable(ChargeParticle, RenderLayerIndex::paricle);
 	m_display->addDrawable(pathPainter, RenderLayerIndex::path);
 }
-void Simulation::addParticle(const vector<Particle*>& list)
+void Simulation::addChargeParticle(const vector<ChargeParticle*>& list)
 {
-	for (Particle* p : list)
+	for (ChargeParticle* p : list)
 	{
-		addParticle(p);
+		addChargeParticle(p);
 	}
 }
-void Simulation::clearParticles()
+void Simulation::clearChargeParticles()
 {
 	m_display->clearDrawable(RenderLayerIndex::paricle);
 	m_display->clearDrawable(RenderLayerIndex::path);
-	m_eField->clearParticles();
-	for (Particle* p : m_eFieldParticles)
+	m_eField->clearChargeParticles();
+	for (ChargeParticle* p : m_eFieldChargeParticles)
 		delete p;
 	for (PathPainter* p : m_pathPatiners)
 		delete p;
-	m_eFieldParticles.clear();
-	m_particles.clear();
+	m_eFieldChargeParticles.clear();
+	m_ChargeParticles.clear();
 	m_pathPatiners.clear();
-	m_eField->addParticle(m_mouseParticle.particle);
-	m_particles.push_back(m_mouseParticle.particle);
+	m_eField->addChargeParticle(m_mouseChargeParticle.ChargeParticle);
+	m_ChargeParticles.push_back(m_mouseChargeParticle.ChargeParticle);
 }
 void Simulation::addShape(Shape* shape)
 {
@@ -153,7 +216,7 @@ void Simulation::onKeyPressEvent(const sf::Event& event)
 	{
 		case sf::Keyboard::Key::Delete:
 		{
-			clearParticles();
+			clearChargeParticles();
 			break;
 		}
 		case sf::Keyboard::Key::E:
@@ -201,31 +264,31 @@ void Simulation::onMouseEvent(const sf::Event& event)
 		case sf::Event::MouseButtonPressed:
 		{
 			float mouseCharge;
-			float newParticleCharge = 5;
+			float newChargeParticleCharge = 5;
 			bool spacePressed = sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Space);
 			
 			switch (event.mouseButton.button)
 			{
 				case sf::Mouse::Button::Left:
 				{
-					mouseCharge = m_mouseParticle.leftClickCharge;
+					mouseCharge = m_mouseChargeParticle.leftClickCharge;
 					break;
 				}
 				case sf::Mouse::Button::Right:
 				{
-					mouseCharge = m_mouseParticle.rightClickCharge;
-					newParticleCharge = -newParticleCharge;
+					mouseCharge = m_mouseChargeParticle.rightClickCharge;
+					newChargeParticleCharge = -newChargeParticleCharge;
 					break;
 				}
 			}
 			if (spacePressed)
 			{
 				bool isStatic = sf::Keyboard::isKeyPressed(sf::Keyboard::Key::LControl);
-				addParticle(sf::Vector2f(m_display->getRelativeMousePos()), newParticleCharge, isStatic);
+				addChargeParticle(sf::Vector2f(m_display->getRelativeMousePos()), newChargeParticleCharge, isStatic);
 			}
 			else
 			{
-				m_mouseParticle.particle->setCharge(mouseCharge);
+				m_mouseChargeParticle.ChargeParticle->setCharge(mouseCharge);
 			}
 			break;
 		}
@@ -236,7 +299,7 @@ void Simulation::onMouseEvent(const sf::Event& event)
 				case sf::Mouse::Button::Left:
 				case sf::Mouse::Button::Right:
 				{
-					m_mouseParticle.particle->setCharge(0);
+					m_mouseChargeParticle.ChargeParticle->setCharge(0);
 					break;
 				}
 			}
@@ -276,7 +339,7 @@ void Simulation::onPreFrameUpdate()
 }
 void Simulation::onPostFrameUpdate()
 {
-	m_mouseParticle.particle->setPos(sf::Vector2f(m_display->getRelativeMousePos()));
+	m_mouseChargeParticle.ChargeParticle->setPos(sf::Vector2f(m_display->getRelativeMousePos()));
 }
 
 void Simulation::onLoop()
@@ -330,15 +393,15 @@ void Simulation::setup()
 		m_display->addDrawable(m_eField, RenderLayerIndex::eField);
 	}
 
-	// particles
+	// ChargeParticles
 	{
-		// Mouse Particle
-		m_mouseParticle.particle = new Particle;
-		m_mouseParticle.particle->setCharge(0);
-		m_mouseParticle.particle->setStatic(true);
-		m_particles.push_back(m_mouseParticle.particle);
-		m_display->addDrawable(m_mouseParticle.particle, RenderLayerIndex::mouseParticle);
-		m_eField->addParticle(m_mouseParticle.particle);
+		// Mouse ChargeParticle
+		m_mouseChargeParticle.ChargeParticle = new ChargeParticle;
+		m_mouseChargeParticle.ChargeParticle->setCharge(0);
+		m_mouseChargeParticle.ChargeParticle->setStatic(true);
+		m_ChargeParticles.push_back(m_mouseChargeParticle.ChargeParticle);
+		m_display->addDrawable(m_mouseChargeParticle.ChargeParticle, RenderLayerIndex::mouseChargeParticle);
+		m_eField->addChargeParticle(m_mouseChargeParticle.ChargeParticle);
 	}
 
 	// Text
@@ -356,18 +419,18 @@ void Simulation::setup()
 void Simulation::clean()
 {
 	m_display->clearDrawable();
-	m_eField->clearParticles();
+	m_eField->clearChargeParticles();
 
-	for (Particle* p : m_eFieldParticles)
+	for (ChargeParticle* p : m_eFieldChargeParticles)
 		delete p;
-	m_eFieldParticles.clear();
+	m_eFieldChargeParticles.clear();
 
 	for (PathPainter* p : m_pathPatiners)
 		delete p;
 	m_pathPatiners.clear();
 
-	delete m_mouseParticle.particle;
-	m_mouseParticle.particle = nullptr;
+	delete m_mouseChargeParticle.ChargeParticle;
+	m_mouseChargeParticle.ChargeParticle = nullptr;
 	delete m_eField;
 	m_eField = nullptr;
 	delete m_display;
@@ -395,57 +458,163 @@ void Simulation::simulate()
 void Simulation::calculatePhysics()
 {
 	m_eField->calculatePhysics(m_simulationTimeInterval);
-	m_eField->checkParticleBounds();
-	
+	m_eField->checkChargeParticleBounds();
+
 #ifdef USE_THREADS
-	//size_t threadCount = 6;
-	////vector<std::thread> threads;
-	////threads.reserve(threadCount);
-	//size_t size = m_particles.size() / threadCount;
-	//size_t rest = m_particles.size() - size * threadCount;
-	//size_t startIndex = 0;
-	//
-	//for (size_t i = 0; i < threadCount; ++i)
-	//{
-	//	m_threads[i].
-	//	threads.push_back(std::thread(&Simulation::calculatePhysicsThreaded, this, startIndex, size));
-	//	startIndex += size;
-	//}
-	//if(rest)
-	//	calculatePhysicsThreaded(startIndex, rest);
-	//
-	//for (std::thread& t : m_threads)
-	//{
-	//	t.join();
-	//}
+	/*size_t threadCount = 6;
+	vector<std::thread*> threads(threadCount);
+	//threads.reserve(threadCount);
+	size_t size = m_ChargeParticles.size() / threadCount;
+	size_t rest = m_ChargeParticles.size() - size * threadCount;
+	size_t startIndex = 0;
+	
+	for (size_t i = 0; i < threadCount; ++i)
+	{
+		//m_threads[i].
+		threads[i] = new std::thread(&Simulation::calculatePhysicsThreaded, this, i, size);
+	}
+	if(rest)
+		calculatePhysicsThreaded(threadCount, rest);
+	
+	for (std::thread* t : threads)
+	{
+		t->join();
+		delete t;
+	}*/
+	{
+		std::unique_lock<std::mutex> lck(m_thread_mutex);
+		m_threadSyncCounter = 1;
+		m_thread_cv.notify_all();
+	}
+	
+	//++m_threadSyncCounterTarget;
+	for (m_counter = 0; m_counter < m_threadData.size(); ++m_counter)
+	{
+		{
+			std::unique_lock<std::mutex> lock(m_thread_mutex2);
+			m_thread_cv2.wait(lock, [this]() { return m_threadData[m_counter].workDone; });
+		}
+	}
+	/*size_t doneCount = 0;
+	while (doneCount != m_threadData.size())
+	{
+		doneCount = 0;
+		for (size_t i = 0; i < m_threadData.size(); ++i)
+		{
+			doneCount += m_threadData[i].workDone;
+		}
+	}*/
+	
+	for (size_t i = 0; i < m_threadData.size(); ++i)
+	{
+		m_threadData[i].workDone = false;
+		m_threadData[i].ChargeParticleCount = m_ChargeParticles.size();
+	}
+	{
+		std::unique_lock<std::mutex> lck(m_thread_mutex);
+		m_threadSyncCounter = 0;
+		m_thread_cv.notify_all();
+	}
+	
+
 #else
-	calculatePhysicsThreaded(0, m_particles.size());
+	size_t size = m_ChargeParticles.size();
+	for (size_t i = 0; i < size; ++i)
+	{
+		if (m_ChargeParticles[i]->isStatic())
+			continue;
+		m_ChargeParticles[i]->calculatePhysiscs(m_ChargeParticles, m_simulationTimeInterval);
+	}
 #endif
-		
+	m_controlledParticle->calculatePhysiscs(m_simulationTimeInterval);
 	for (Shape* s : m_shapes)
 		s->calculatePhysics(m_simulationTimeInterval);
 }
-void Simulation::calculatePhysicsThreaded(size_t particleIndex, size_t size)
+#ifdef USE_THREADS
+void Simulation::calculatePhysicsThreaded(size_t index, ThreadData *data)
 {
-	size_t end = particleIndex + size;
-	if (end > m_particles.size())
-		end = m_particles.size();
+	if (!data)
+		return;
 
-	for (size_t i = particleIndex; i < end; ++i)
+	bool doLoop = true;
+	size_t targetCounter = 1;
+
+	size_t size = data->ChargeParticleCount / data->threadsCunt;
+	size_t start = index * size;
+	size_t end = start + size;
+	size_t rest = data->ChargeParticleCount - size * data->threadsCunt;
+
+	while (doLoop)
 	{
-		if (m_particles[i]->isStatic())
-			continue;
-		m_particles[i]->calculatePhysiscs(m_particles, m_simulationTimeInterval);
+
+		{
+			std::unique_lock<std::mutex> lk(m_thread_mutex);
+			//m_thread_cv.wait(lk, targetCounter == m_threadSyncCounter);
+			m_thread_cv.wait(lk, [] {return m_threadSyncCounter; });
+			
+		}
+		doLoop = data->doLoop;
+		//++targetCounter;
+		//{
+		//	std::unique_lock<std::mutex> lk(m_thread_mutex);
+		//	++m_threadSyncCounterTarget;
+		//}
+		size = data->ChargeParticleCount / data->threadsCunt;
+		start = index * size;
+		end = start + size;
+		if (index == data->threadsCunt - 1)
+		{
+			rest = data->ChargeParticleCount - size * data->threadsCunt;
+			end += rest;
+		}
+		
+		for (size_t i = start; i < end; ++i)
+		{
+			if (m_ChargeParticles[i]->isStatic())
+				continue;
+			m_ChargeParticles[i]->calculatePhysiscs(m_ChargeParticles, m_simulationTimeInterval);
+		}
+		{
+			//std::unique_lock<std::mutex> lock(m_thread_mutex2);
+			data->workDone = true;
+		}
+		
+
+		{
+			std::unique_lock<std::mutex> lk(m_thread_mutex);
+			//m_thread_cv.wait(lk, targetCounter == m_threadSyncCounter);
+			m_thread_cv.wait(lk, [] {return !m_threadSyncCounter; });
+
+		}
+		//++m_threadSyncCounterTarget;
 	}
+
+
+
+
+	/*
+	size_t start = index * size;
+	size_t end = start + size;
+	if (end > m_ChargeParticles.size())
+		end = m_ChargeParticles.size();
+
+	for (size_t i = start; i < end; ++i)
+	{
+		if (m_ChargeParticles[i]->isStatic())
+			continue;
+		m_ChargeParticles[i]->calculatePhysiscs(m_ChargeParticles, m_simulationTimeInterval);
+	}*/
 }
+#endif
 void Simulation::checkCollisions()
 {
 	for (Shape* s : m_shapes)
-		s->checkCollision(m_eFieldParticles);
+		s->checkCollision(m_eFieldChargeParticles);
 }
 void Simulation::applyMovements()
 {
-	for (Particle* p : m_eFieldParticles)
+	m_controlledParticle->applyPhysics();
+	for (ChargeParticle* p : m_eFieldChargeParticles)
 	{
 		if (p->isStatic())
 			continue;
@@ -459,7 +628,7 @@ void Simulation::updateInfoText()
 	string text = "";
 	if (m_simulationTimes.frameInterval > 0)
 	{
-		text+= "TPS: "+  floatToString(1000.f / m_simulationTimes.frameInterval,3) + "\n";
+		text+= "TPS: "+  floatToString(1000.f / m_simulationTimes.ticksPerSecond,3) + "\n";
 	}
 
 	text+= "physics delta t:  " + floatToString(m_simulationTimeInterval, 3) + " s\n";
@@ -474,9 +643,9 @@ void Simulation::updateInfoText()
 	m_simulationTimes.textPainter.setText(text);
 }
 
-void Simulation::addParticle(const sf::Vector2f& spawnPos, float charge, bool isStatic)
+void Simulation::addChargeParticle(const sf::Vector2f& spawnPos, float charge, bool isStatic)
 {
-	Particle* p = new Particle();
+	ChargeParticle* p = new ChargeParticle();
 	p->setCharge(charge);
 	p->setPos(spawnPos);
 	p->setStatic(isStatic);
@@ -484,16 +653,16 @@ void Simulation::addParticle(const sf::Vector2f& spawnPos, float charge, bool is
 	//pathPainter->setColor(sf::Color(0, 150, 180));
 	m_pathPatiners.push_back(pathPainter);
 	
-	m_eField->addParticle(p);
-	m_eFieldParticles.push_back(p);
-	m_particles.push_back(p);
+	m_eField->addChargeParticle(p);
+	m_eFieldChargeParticles.push_back(p);
+	m_ChargeParticles.push_back(p);
 	m_display->addDrawable(p,RenderLayerIndex::paricle);
 	m_display->addDrawable(pathPainter, RenderLayerIndex::path);
 }
 
 void Simulation::readDistribution(DistributionPlot* plot)
 {
-	vector<Particle*> particles = m_eFieldParticles;
+	vector<ChargeParticle*> ChargeParticles = m_eFieldChargeParticles;
 	float offset;
 	float dim;
 	size_t div = plot->getXResolution();
@@ -515,23 +684,23 @@ void Simulation::readDistribution(DistributionPlot* plot)
 		float min = (x * dim) / div + offset;
 		float max = min + (float)dim / (float)div;
 
-		for (size_t i = 0; i < particles.size(); ++i)
+		for (size_t i = 0; i < ChargeParticles.size(); ++i)
 		{
-			if (particles[i] == nullptr)
+			if (ChargeParticles[i] == nullptr)
 				continue;
 			float pos;
 			if (plot->getAllignement() == DistributionPlot::Allignement::x)
 			{
-				pos = particles[i]->getPos().x;
+				pos = ChargeParticles[i]->getPos().x;
 			}
 			else
 			{
-				pos = particles[i]->getPos().y;
+				pos = ChargeParticles[i]->getPos().y;
 			}
 			if (pos > min && pos < max)
 			{
 				plot->addCount(x, 1);
-				particles[i] = nullptr;
+				ChargeParticles[i] = nullptr;
 			}
 		}
 	}

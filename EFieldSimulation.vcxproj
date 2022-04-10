@@ -121,7 +121,7 @@
       <PreprocessorDefinitions>SFML_STATIC;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>C:\SFML-2.5.1\include</AdditionalIncludeDirectories>
-      <WholeProgramOptimization>true</WholeProgramOptimization>
+      <WholeProgramOptimization>false</WholeProgramOptimization>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -139,8 +139,9 @@
       <PreprocessorDefinitions>SFML_STATIC;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>C:\SFML-2.5.1\include</AdditionalIncludeDirectories>
-      <Optimization>Full</Optimization>
+      <Optimization>MaxSpeed</Optimization>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
+      <WholeProgramOptimization>true</WholeProgramOptimization>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -153,6 +154,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="EFieldSimulation.cpp" />
+    <ClCompile Include="src\controlledParticle.cpp" />
     <ClCompile Include="src\debugHelper.cpp" />
     <ClCompile Include="src\display.cpp" />
     <ClCompile Include="src\displayInterface.cpp" />
@@ -160,6 +162,7 @@
     <ClCompile Include="src\drawable.cpp" />
     <ClCompile Include="src\eField.cpp" />
     <ClCompile Include="src\graphicsUtilities.cpp" />
+    <ClCompile Include="src\chargeParticle.cpp" />
     <ClCompile Include="src\particle.cpp" />
     <ClCompile Include="src\pathPainter.cpp" />
     <ClCompile Include="src\shape.cpp" />
@@ -169,6 +172,7 @@
     <ClCompile Include="src\vectorPainter.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="inc\controlledParticle.h" />
     <ClInclude Include="inc\debugHelper.h" />
     <ClInclude Include="inc\display.h" />
     <ClInclude Include="inc\displayInterface.h" />
@@ -177,6 +181,7 @@
     <ClInclude Include="inc\drawableInterface.h" />
     <ClInclude Include="inc\eField.h" />
     <ClInclude Include="inc\graphicsUtilities.h" />
+    <ClInclude Include="inc\chargeParticle.h" />
     <ClInclude Include="inc\particle.h" />
     <ClInclude Include="inc\pathPainter.h" />
     <ClInclude Include="inc\shape.h" />

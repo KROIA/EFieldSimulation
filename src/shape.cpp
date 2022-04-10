@@ -70,7 +70,7 @@ void Shape::calculatePhysics(float deltaTime)
 	updateBoundingBox();
 
 }
-void Shape::checkCollision(const vector<Particle*>& particles)
+void Shape::checkCollision(const vector<ChargeParticle*>& ChargeParticles)
 {
 	m_collisionPoints.clear();
 	m_vectors.clear();
@@ -78,7 +78,7 @@ void Shape::checkCollision(const vector<Particle*>& particles)
 	
 	
 
-	for (Particle* p : particles)
+	for (ChargeParticle* p : ChargeParticles)
 	{
 		sf::Vector2f currentMovingVector = p->getDeltaPos();
 		sf::Vector2f currentPos = p->getPos();
@@ -86,7 +86,7 @@ void Shape::checkCollision(const vector<Particle*>& particles)
 		bool  reCheckCollision = false;
 		if(!m_boundingBox.contains(currentPos) && 
 		   !m_boundingBox.contains(nextPos))
-			continue; // Particle not in boundingbox, go to next particle
+			continue; // ChargeParticle not in boundingbox, go to next ChargeParticle
 
 		if (m_drawDebug)
 		{
@@ -123,10 +123,10 @@ void Shape::checkCollision(const vector<Particle*>& particles)
 				}*/
 
 				bool doesCross;
-				float particleScalar, edgeScalar;
+				float ChargeParticleScalar, edgeScalar;
 			
 				sf::Vector2f normal = VectorMath::rotate90_clockwise(VectorMath::getNormalized(edgeVec));
-				VectorMath::intersectionFactor(currentPos, currentMovingVector, particleScalar,
+				VectorMath::intersectionFactor(currentPos, currentMovingVector, ChargeParticleScalar,
 											   pointA, edgeVec, edgeScalar,
 											   doesCross);
 
@@ -156,17 +156,17 @@ void Shape::checkCollision(const vector<Particle*>& particles)
 
 				// Check if they intersect
 				float margin = 1;
-				if (particleScalar < 0 || particleScalar > 1 ||
+				if (ChargeParticleScalar < 0 || ChargeParticleScalar > 1 ||
 					edgeScalar < -margin || edgeScalar     > 1 + margin)
 					continue; // They do not intersect
 
 				// They do intersect
 				// Resolve collision
 
-				//   Ajust the targeted moving vector of the particle
-				//currentMovingVector *= (particleScalar - 0.1f);
-				sf::Vector2f newMovingVec = currentMovingVector * (particleScalar - 0.01f);
-				/*if (VectorMath::getLength(currentMovingVector) > 0.2 && particleScalar > 0.2)
+				//   Ajust the targeted moving vector of the ChargeParticle
+				//currentMovingVector *= (ChargeParticleScalar - 0.1f);
+				sf::Vector2f newMovingVec = currentMovingVector * (ChargeParticleScalar - 0.01f);
+				/*if (VectorMath::getLength(currentMovingVector) > 0.2 && ChargeParticleScalar > 0.2)
 				{
 					newMovingVec += normal;
 				}*/
@@ -213,8 +213,8 @@ void Shape::checkCollision(const vector<Particle*>& particles)
 								sf::Vector2f pointB1 = m_globalPoints[neighbourStartIndex + 1].position;
 								sf::Vector2f edgeVec1 = pointB1 - pointA1;
 								bool doesCross1;
-								float particleScalar1, edgeScalar1;
-								VectorMath::intersectionFactor(additionalMoveStartPos, additionalMove, particleScalar1,
+								float ChargeParticleScalar1, edgeScalar1;
+								VectorMath::intersectionFactor(additionalMoveStartPos, additionalMove, ChargeParticleScalar1,
 															   pointA1, edgeVec1, edgeScalar1,
 															   doesCross1);
 
@@ -222,14 +222,14 @@ void Shape::checkCollision(const vector<Particle*>& particles)
 								{
 									// Check if they intersect
 									float margin1 = 0.1;
-									if (particleScalar1 < 0 || particleScalar1 > 1 ||
+									if (ChargeParticleScalar1 < 0 || ChargeParticleScalar1 > 1 ||
 										edgeScalar1 < -margin1 || edgeScalar1     > 1 + margin1)
 									{
 									}
 									else
 									{
 										neighbourMatch = true;
-										additionalMove *= (particleScalar1 - 0.01f);
+										additionalMove *= (ChargeParticleScalar1 - 0.01f);
 										//velocity = sf::Vector2f(0, 0);
 										float edgeLengthSquare1 = VectorMath::getLengthSquare(edgeVec1);
 										float velocityDotProduct1 = VectorMath::dotProduct(velocity, edgeVec1);
@@ -248,8 +248,8 @@ void Shape::checkCollision(const vector<Particle*>& particles)
 								sf::Vector2f pointB1 = m_globalPoints[neighbourStartIndex + 1].position;
 								sf::Vector2f edgeVec1 = pointB1 - pointA1;
 								bool doesCross1;
-								float particleScalar1, edgeScalar1;
-								VectorMath::intersectionFactor(additionalMoveStartPos, additionalMove, particleScalar1,
+								float ChargeParticleScalar1, edgeScalar1;
+								VectorMath::intersectionFactor(additionalMoveStartPos, additionalMove, ChargeParticleScalar1,
 															   pointA1, edgeVec1, edgeScalar1,
 															   doesCross1);
 
@@ -257,14 +257,14 @@ void Shape::checkCollision(const vector<Particle*>& particles)
 								{
 									// Check if they intersect
 									float margin1 = 0.1;
-									if (particleScalar1 < 0 || particleScalar1 > 1 ||
+									if (ChargeParticleScalar1 < 0 || ChargeParticleScalar1 > 1 ||
 										edgeScalar1 < -margin1 || edgeScalar1     > 1 + margin1)
 									{
 									}
 									else
 									{
 										neighbourMatch = true;
-										additionalMove *= (particleScalar1 - 0.01f);
+										additionalMove *= (ChargeParticleScalar1 - 0.01f);
 										//velocity = sf::Vector2f(0, 0);
 										float edgeLengthSquare1 = VectorMath::getLengthSquare(edgeVec1);
 										float velocityDotProduct1 = VectorMath::dotProduct(velocity, edgeVec1);

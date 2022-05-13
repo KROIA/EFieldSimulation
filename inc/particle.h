@@ -6,7 +6,7 @@ class Particle : public Drawable
 {
 	public:
 	Particle();
-	~Particle();
+	virtual ~Particle();
 
 	void setRadius(float radius);
 	float getRadius() const;

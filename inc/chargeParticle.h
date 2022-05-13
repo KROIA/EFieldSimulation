@@ -9,7 +9,7 @@ class ChargeParticle	:	 public Particle
 {
 	public:
 	ChargeParticle();
-	~ChargeParticle();
+	virtual ~ChargeParticle();
 
 
 	void setCharge(float q);
@@ -35,12 +35,14 @@ class ChargeParticle	:	 public Particle
 						   float timeIntervalSec);
 	void applyPhysics();
 
-	inline sf::Vector2f getFieldVector(const sf::Vector2f& point) const;
+	sf::Vector2f getEFieldVector(const sf::Vector2f& point) const;
+	sf::Vector2f getBFieldVector(const sf::Vector2f& point) const;
 
 	virtual void draw(sf::RenderWindow* window,
 					  const sf::Vector2f& offset = sf::Vector2f(0, 0));
 
 	static sf::Color getChargeColor(float charge);
+
 
 	static const double fieldConstant; // [As/Vm]
 	static const double PI;
@@ -48,6 +50,9 @@ class ChargeParticle	:	 public Particle
 	static const double massPerElectron; // [kg]
 	static const double chargePerElectron; // [C] = [As]
 	static const double massPerCharge; // [kg/C] = [kg/As]
+	// Magnetostatic
+	static const double mu_PI_2; // mu_0/(2*PI)
+	static const double chargeZVelocity;
 
 	static void setStandard_charge(float charge);
 	static void setStandard_size(float size);

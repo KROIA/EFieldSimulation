@@ -16,6 +16,7 @@
 // Simulation stuff
 #include "chargeParticle.h"
 #include "eField.h"
+#include "bField.h"
 #include "distributionPlot.h"
 #include "pathPainter.h"
 #include "shape.h"
@@ -31,6 +32,7 @@ struct MouseChargeParticle
 enum RenderLayerIndex
 {
 	eField = 0,
+	bField = 7,
 	paricle = 1,
 	mouseChargeParticle = 2,
 	path = 3,
@@ -67,6 +69,9 @@ class Simulation : public DisplayInterface
 		float rightClickCharge;
 
 		float eField_maxVectorLength;
+		float eField_minVectorLength;
+		float bField_maxVectorLength;
+		float bField_minVectorLength;
 
 	};
 #ifdef USE_THREADS
@@ -138,15 +143,13 @@ class Simulation : public DisplayInterface
 	Display* m_display;
 	vector<DistributionPlot*> m_distributionPlots;
 	EField* m_eField;
+	BField* m_bField;
 
 	vector<ChargeParticle*> m_ChargeParticles;
 	vector<ChargeParticle*> m_eFieldChargeParticles;
 	vector<PathPainter*> m_pathPatiners;
 	vector<Shape*> m_shapes;
 
-
-	ControlledParticle* m_controlledParticle;
-	PathPainter *m_cPath;
 
 	MouseChargeParticle m_mouseChargeParticle;
 

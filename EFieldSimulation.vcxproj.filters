@@ -66,6 +66,12 @@
     <ClCompile Include="src\controlledParticle.cpp">
       <Filter>Quelldateien</Filter>
     </ClCompile>
+    <ClCompile Include="src\vectorField.cpp">
+      <Filter>Quelldateien</Filter>
+    </ClCompile>
+    <ClCompile Include="src\bField.cpp">
+      <Filter>Quelldateien</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="inc\display.h">
@@ -117,6 +123,12 @@
       <Filter>Headerdateien</Filter>
     </ClInclude>
     <ClInclude Include="inc\controlledParticle.h">
+      <Filter>Headerdateien</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\vectorField.h">
+      <Filter>Headerdateien</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\bField.h">
       <Filter>Headerdateien</Filter>
     </ClInclude>
   </ItemGroup>

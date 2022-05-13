@@ -3,10 +3,12 @@
 
 const double ChargeParticle::fieldConstant = 8.854187e-12; // [As/Vm]
 const double ChargeParticle::PI = 3.14159265;
-const double ChargeParticle::E_PI_4 = 1.f/(fieldConstant * 4 * PI); // 1/(E0*PI*4) [Vm/As]
+const double ChargeParticle::E_PI_4 = 1.f / (fieldConstant * 4 * PI); // 1/(E0*PI*4) [Vm/As]
 const double ChargeParticle::massPerElectron = 9.109383e-31; // [kg]
 const double ChargeParticle::chargePerElectron = -1.602176e-19; // [C] = [As]
 const double ChargeParticle::massPerCharge = massPerElectron / chargePerElectron; // [kg/C] = [kg/As]
+const double ChargeParticle::mu_PI_2 = 2*10e-7; // mu_0/(2*PI) [ ... ]
+const double ChargeParticle::chargeZVelocity = 1;
 
 float ChargeParticle::m_standard_charge = 0;
 float ChargeParticle::m_standard_size = 10;
@@ -112,7 +114,7 @@ void ChargeParticle::calculatePhysiscs(const vector<ChargeParticle*>& ChargePart
 	{
 		if (p == this || p == nullptr) // ignore the own vector field
 			continue;
-		eField += p->getFieldVector(m_pos);
+		eField += p->getEFieldVector(m_pos);
 	}
 	if (VectorMath::getLength(eField) > 1000000000)
 	{
@@ -141,7 +143,7 @@ void ChargeParticle::applyPhysics()
 	m_pos += m_deltaPos;
 }
 
-inline sf::Vector2f ChargeParticle::getFieldVector(const sf::Vector2f& point) const
+sf::Vector2f ChargeParticle::getEFieldVector(const sf::Vector2f& point) const
 {
 	sf::Vector2f distanceVec = m_pos - point; // Vector from ChargeParticle to Point
 	float lengthSquare = VectorMath::getLengthSquare(distanceVec);
@@ -151,6 +153,17 @@ inline sf::Vector2f ChargeParticle::getFieldVector(const sf::Vector2f& point) co
 	float scalar = m_charge * E_PI_4 / (lengthSquare);
 
 	return scalar * VectorMath::getNormalized(distanceVec);
+}
+sf::Vector2f ChargeParticle::getBFieldVector(const sf::Vector2f& point) const
+{
+	sf::Vector2f distanceVec = m_pos - point; // Vector from ChargeParticle to Point
+	float length= VectorMath::getLength(distanceVec);
+	if (length == 0)
+		return sf::Vector2f((float)(rand() % 1000) / 10.f, (float)(rand() % 1000) / 10.f);
+
+	float scalar = mu_PI_2 * m_charge * chargeZVelocity / (length);
+
+	return scalar * VectorMath::rotate(VectorMath::getNormalized(distanceVec), PI/2.f);
 }
 
 

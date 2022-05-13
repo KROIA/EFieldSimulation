@@ -1,13 +1,13 @@
-#include "eField.h"
+#include "bField.h"
 
-EField::EField(const sf::Vector2f& dim,
+BField::BField(const sf::Vector2f& dim,
 			   const sf::Vector2u& resolution)
-	:  VectorField(dim, resolution)
+	: VectorField(dim, resolution)
 {}
 
-EField::~EField()
+BField::~BField()
 {}
-void EField::calculateField()
+void BField::calculateField()
 {
 	if (!m_visible)
 		return;
@@ -21,7 +21,7 @@ void EField::calculateField()
 
 			for (ChargeParticle* p : m_ChargeParticles)
 			{
-				sum += p->getEFieldVector(pos);
+				sum += p->getBFieldVector(pos);
 			}
 			float length = VectorMath::getLength(sum);
 			if (length < m_minVectorLength)
@@ -29,5 +29,6 @@ void EField::calculateField()
 			else
 				vec->setVector(VectorMath::getNormalized(sum, m_vectorLength));
 			vec->setColor(getColorFromSignal(VectorMath::getLength(sum), 0, m_maxVectorLength));
+			//std::cout << sum.x << " " << sum.y;
 		}
 }

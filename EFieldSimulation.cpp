@@ -16,6 +16,8 @@ void buildLevel_influence(Simulation& sim);
 void buildLevel_spread(Simulation& sim);
 void buildLevel_spread2(Simulation& sim);
 void buildLevel_spreadSquare(Simulation& sim);
+void buildLevel_koaxialCable(Simulation& sim);
+void buildLevel_koaxialCableShell(Simulation& sim, size_t outerCount = 64, double radius = 250, float charge = 5);
 
 int main()
 {
@@ -29,10 +31,13 @@ int main()
 	settings.windowSize				= sf::Vector2u(1900, 900);
 	settings.targetFrameRate		= 60;
 	settings.gridSizeX				= settings.windowSize.x/19;
-	settings.physicsTimeInterval	= 5; // sec
-	settings.leftClickCharge		= 100;
-	settings.rightClickCharge		= -100;
+	settings.physicsTimeInterval	= 0.1; // sec
+	settings.leftClickCharge		= 5*64;
+	settings.rightClickCharge		= -5*64;
 	settings.eField_maxVectorLength	= 1e7;
+	settings.eField_minVectorLength	= 1e5;
+	settings.bField_maxVectorLength = 1e-8;
+	settings.bField_minVectorLength = 1e-11;
 	
 
     Simulation simulation(settings);
@@ -45,6 +50,8 @@ int main()
 	//buildLevel_spread(simulation);
 	//buildLevel_spread2(simulation);
 	//buildLevel_spreadSquare(simulation);
+	buildLevel_koaxialCable(simulation);
+	//buildLevel_koaxialCableShell(simulation);
     simulation.start();
 	return 0;
 }
@@ -461,4 +468,45 @@ void buildLevel_spreadSquare(Simulation& sim)
 	sim.addShape(shape1);
 	//sim.addShape(shape2);
 	//sim.addChargeParticle(ChargeParticles);
+}
+
+void buildLevel_koaxialCable(Simulation& sim)
+{
+	sf::Vector2f worldSize = sim.getWorldSize();
+	sf::Vector2f middlePoint = worldSize / 2.f;
+	float charge = 5;
+
+	double radius = 250;
+	size_t outerCount = 64;
+	double dAlpha = 2.f*PI / (double)outerCount;
+
+	buildLevel_koaxialCableShell(sim,outerCount,radius,charge);
+
+	ChargeParticle* ChargeParticle1 = new ChargeParticle;
+	ChargeParticle1->setPos(middlePoint+sf::Vector2f(radius/2,0));
+	ChargeParticle1->setCharge(-charge * (outerCount));
+	ChargeParticle1->setStatic(true);
+
+	sim.addChargeParticle(ChargeParticle1);
+}
+void buildLevel_koaxialCableShell(Simulation& sim, size_t outerCount, double radius, float charge)
+{
+	sf::Vector2f worldSize = sim.getWorldSize();
+	sf::Vector2f middlePoint = worldSize / 2.f;
+
+	double dAlpha = 2.f * PI / (double)outerCount;
+	vector<ChargeParticle*> chargeParticles;
+
+	for (size_t x = 0; x < outerCount; ++x)
+	{
+		sf::Vector2f pos1 = middlePoint + sf::Vector2f(radius * cos((double)x * dAlpha), radius * sin((double)x * dAlpha));
+		ChargeParticle* ChargeParticle1 = new ChargeParticle;
+		ChargeParticle1->setPos(pos1);
+		ChargeParticle1->setCharge(charge);
+		ChargeParticle1->setStatic(true);
+		chargeParticles.push_back(ChargeParticle1);
+
+	}
+
+	sim.addChargeParticle(chargeParticles);
 }

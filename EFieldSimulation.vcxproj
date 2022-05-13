@@ -154,6 +154,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="EFieldSimulation.cpp" />
+    <ClCompile Include="src\bField.cpp" />
     <ClCompile Include="src\controlledParticle.cpp" />
     <ClCompile Include="src\debugHelper.cpp" />
     <ClCompile Include="src\display.cpp" />
@@ -169,9 +170,11 @@
     <ClCompile Include="src\simulation.cpp" />
     <ClCompile Include="src\textPainter.cpp" />
     <ClCompile Include="src\utilities.cpp" />
+    <ClCompile Include="src\vectorField.cpp" />
     <ClCompile Include="src\vectorPainter.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="inc\bField.h" />
     <ClInclude Include="inc\controlledParticle.h" />
     <ClInclude Include="inc\debugHelper.h" />
     <ClInclude Include="inc\display.h" />
@@ -188,6 +191,7 @@
     <ClInclude Include="inc\simulation.h" />
     <ClInclude Include="inc\textPainter.h" />
     <ClInclude Include="inc\utilities.h" />
+    <ClInclude Include="inc\vectorField.h" />
     <ClInclude Include="inc\vectorPainter.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

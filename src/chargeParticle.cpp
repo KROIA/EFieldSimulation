@@ -104,7 +104,7 @@ const sf::Vector2f& ChargeParticle::getDeltaPos() const
 	return m_deltaPos;
 }
 
-void ChargeParticle::calculatePhysiscs(const vector<ChargeParticle*>& ChargeParticleList,
+void ChargeParticle::calculateElectrostaticPhysiscs(const vector<ChargeParticle*>& ChargeParticleList,
 								 float timeIntervalSec)
 {
 //	if (m_static)
@@ -138,6 +138,42 @@ void ChargeParticle::calculatePhysiscs(const vector<ChargeParticle*>& ChargePart
 #endif
 	m_deltaPos = m_velocity * timeIntervalSec;
 }
+void ChargeParticle::calculateMagneticPhysiscs(const vector<ChargeParticle*>& ChargeParticleList,
+							   float timeIntervalSec)
+{
+	sf::Vector2f force(0, 0);
+	for (ChargeParticle* p : ChargeParticleList)
+	{
+		if (p == this || p == nullptr) // ignore the own vector field
+			continue;
+		force += p->getForceFieldVector(m_pos);
+	}
+	if (VectorMath::getLength(force) > 1000000000)
+	{
+		force = VectorMath::getNormalized(force, 1000000000);
+	}
+
+	force *= m_charge;
+
+	
+
+	//force -= force * m_drag;
+	sf::Vector2f acceleration = /*(float)(abs(m_charge) * massPerCharge) * */force;
+	m_velocity += acceleration * timeIntervalSec;
+
+#ifdef ChargeParticle_USE_MAX_VELOCITY
+	if (VectorMath::getLengthSquare(m_velocity) > m_maxVelocitySquare)
+	{
+		m_velocity = VectorMath::getNormalized(m_velocity, sqrt(m_maxVelocitySquare));
+	}
+#endif
+#ifdef ChargeParticle_USE_DRAG
+	m_velocity -= m_velocity * m_drag * timeIntervalSec;
+#endif
+	m_deltaPos = m_velocity * timeIntervalSec;
+    //std::cout << "Magn m_velocity: " << VectorMath::getLength(m_velocity) << " " << m_velocity.x << " " << m_velocity.x << "\n";
+	
+}
 void ChargeParticle::applyPhysics()
 {
 	m_pos += m_deltaPos;
@@ -165,9 +201,9 @@ sf::Vector2f ChargeParticle::getBFieldVector(const sf::Vector2f& point) const
 
 	return scalar * VectorMath::rotate(VectorMath::getNormalized(distanceVec), PI/2.f);
 }
-sf::Vector2f ChargeParticle::getForceFieldVector(const sf::Vector2f& point, float current) const
+sf::Vector2f ChargeParticle::getForceFieldVector(const sf::Vector2f& point) const
 {
-	return VectorMath::rotate(getBFieldVector(point), PI / 2.f) * current;
+	return VectorMath::rotate(getBFieldVector(point), PI / 2.f);
 }
 
 void ChargeParticle::draw(sf::RenderWindow* window,

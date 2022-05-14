@@ -31,13 +31,15 @@ class ChargeParticle	:	 public Particle
 	void setDeltaPos(const sf::Vector2f &deltaPos);
 	const sf::Vector2f& getDeltaPos() const;
 
-	void calculatePhysiscs(const vector<ChargeParticle*> &ChargeParticleList,
+	void calculateElectrostaticPhysiscs(const vector<ChargeParticle*> &ChargeParticleList,
+						   float timeIntervalSec);
+	void calculateMagneticPhysiscs(const vector<ChargeParticle*>& ChargeParticleList,
 						   float timeIntervalSec);
 	void applyPhysics();
 
 	sf::Vector2f getEFieldVector(const sf::Vector2f& point) const;
 	sf::Vector2f getBFieldVector(const sf::Vector2f& point) const;
-	sf::Vector2f getForceFieldVector(const sf::Vector2f& point, float current = 1.f) const;
+	sf::Vector2f getForceFieldVector(const sf::Vector2f& point) const;
 
 	virtual void draw(sf::RenderWindow* window,
 					  const sf::Vector2f& offset = sf::Vector2f(0, 0));

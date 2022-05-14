@@ -42,7 +42,9 @@ int main()
 	settings.bField_minVectorLength = 1e-11;
 
 	settings.forceField_maxVectorLength = 1e-8;
-	settings.forceField_minVectorLength = 1e-15;
+	settings.forceField_minVectorLength = 1e-11;
+
+	settings.physicsMode = PhysicsMode::electrostatic;
 	
 
     Simulation simulation(settings);

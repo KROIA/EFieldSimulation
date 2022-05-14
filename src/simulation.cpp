@@ -8,6 +8,7 @@ size_t Simulation::m_counter = 0;
 #endif
 Simulation::Simulation(const Settings& settings)
 	: m_simulationTimes({ TextPainter(),0,0,0,0,0,0,0 })
+	, m_settings(settings)
 {
 	m_windowSize		= settings.windowSize;
 	m_display			= new Display(m_windowSize, "E-Feld Simulation");
@@ -293,7 +294,7 @@ void Simulation::onMouseEvent(const sf::Event& event)
 	{
 		case sf::Event::MouseButtonPressed:
 		{
-			float mouseCharge;
+			float mouseCharge = 0;
 			float newChargeParticleCharge = 50;
 			bool spacePressed = sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Space);
 			
@@ -318,7 +319,8 @@ void Simulation::onMouseEvent(const sf::Event& event)
 			}
 			else
 			{
-				m_mouseChargeParticle.ChargeParticle->setCharge(mouseCharge);
+				if(mouseCharge != 0)
+					m_mouseChargeParticle.ChargeParticle->setCharge(mouseCharge);
 			}
 			break;
 		}
@@ -565,11 +567,32 @@ void Simulation::calculatePhysics()
 
 #else
 	size_t size = m_ChargeParticles.size();
-	for (size_t i = 0; i < size; ++i)
+	switch (m_settings.physicsMode)
 	{
-		if (m_ChargeParticles[i]->isStatic())
-			continue;
-		m_ChargeParticles[i]->calculatePhysiscs(m_ChargeParticles, m_simulationTimeInterval);
+		case PhysicsMode::electrostatic:
+		{
+			for (size_t i = 0; i < size; ++i)
+			{
+				if (m_ChargeParticles[i]->isStatic())
+					continue;
+				m_ChargeParticles[i]->calculateElectrostaticPhysiscs(m_ChargeParticles, m_simulationTimeInterval);
+			}
+			break;
+		}
+		case PhysicsMode::magnetic:
+		{
+			for (size_t i = 0; i < size; ++i)
+			{
+				if (m_ChargeParticles[i]->isStatic())
+					continue;
+				m_ChargeParticles[i]->calculateMagneticPhysiscs(m_ChargeParticles, m_simulationTimeInterval);
+			}
+			break;
+		}
+		default:
+		{
+			std::cout << "no physicsMode defined\n";
+		}
 	}
 #endif
 	for (Shape* s : m_shapes)
@@ -613,11 +636,28 @@ void Simulation::calculatePhysicsThreaded(size_t index, ThreadData *data)
 			end += rest;
 		}
 		
-		for (size_t i = start; i < end; ++i)
+		switch (m_settings.physicsMode)
 		{
-			if (m_ChargeParticles[i]->isStatic())
-				continue;
-			m_ChargeParticles[i]->calculatePhysiscs(m_ChargeParticles, m_simulationTimeInterval);
+			case PhysicsMode::electrostatic:
+			{
+				for (size_t i = start; i < end; ++i)
+				{
+					if (m_ChargeParticles[i]->isStatic())
+						continue;
+					m_ChargeParticles[i]->calculateElectrostaticPhysiscs(m_ChargeParticles, m_simulationTimeInterval);
+				}
+				break;
+			}
+			case PhysicsMode::magnetic:
+			{
+				for (size_t i = start; i < end; ++i)
+				{
+					if (m_ChargeParticles[i]->isStatic())
+						continue;
+					m_ChargeParticles[i]->calculateMagneticPhysiscs(m_ChargeParticles, m_simulationTimeInterval);
+				}
+				break;
+			}
 		}
 		{
 			//std::unique_lock<std::mutex> lock(m_thread_mutex2);

@@ -42,6 +42,11 @@ enum RenderLayerIndex
 	plot = 5,
 	text = 6
 };
+enum PhysicsMode
+{
+	electrostatic,
+	magnetic
+};
 
 struct SimulationTimes
 {
@@ -78,6 +83,8 @@ class Simulation : public DisplayInterface
 
 		float forceField_maxVectorLength;
 		float forceField_minVectorLength;
+
+		PhysicsMode physicsMode;
 
 	};
 #ifdef USE_THREADS
@@ -161,6 +168,7 @@ class Simulation : public DisplayInterface
 	MouseChargeParticle m_mouseChargeParticle;
 
 	SimulationTimes m_simulationTimes;
+	Settings m_settings;
 	
 
 #ifdef USE_THREADS

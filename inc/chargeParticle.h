@@ -37,6 +37,7 @@ class ChargeParticle	:	 public Particle
 
 	sf::Vector2f getEFieldVector(const sf::Vector2f& point) const;
 	sf::Vector2f getBFieldVector(const sf::Vector2f& point) const;
+	sf::Vector2f getForceFieldVector(const sf::Vector2f& point, float current = 1.f) const;
 
 	virtual void draw(sf::RenderWindow* window,
 					  const sf::Vector2f& offset = sf::Vector2f(0, 0));

@@ -165,7 +165,10 @@ sf::Vector2f ChargeParticle::getBFieldVector(const sf::Vector2f& point) const
 
 	return scalar * VectorMath::rotate(VectorMath::getNormalized(distanceVec), PI/2.f);
 }
-
+sf::Vector2f ChargeParticle::getForceFieldVector(const sf::Vector2f& point, float current) const
+{
+	return VectorMath::rotate(getBFieldVector(point), PI / 2.f) * current;
+}
 
 void ChargeParticle::draw(sf::RenderWindow* window,
 					const sf::Vector2f& offset)

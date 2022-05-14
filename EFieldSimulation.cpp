@@ -34,10 +34,15 @@ int main()
 	settings.physicsTimeInterval	= 0.1; // sec
 	settings.leftClickCharge		= 5*64;
 	settings.rightClickCharge		= -5*64;
+
 	settings.eField_maxVectorLength	= 1e7;
 	settings.eField_minVectorLength	= 1e5;
+
 	settings.bField_maxVectorLength = 1e-8;
 	settings.bField_minVectorLength = 1e-11;
+
+	settings.forceField_maxVectorLength = 1e-8;
+	settings.forceField_minVectorLength = 1e-15;
 	
 
     Simulation simulation(settings);
@@ -483,7 +488,7 @@ void buildLevel_koaxialCable(Simulation& sim)
 	buildLevel_koaxialCableShell(sim,outerCount,radius,charge);
 
 	ChargeParticle* ChargeParticle1 = new ChargeParticle;
-	ChargeParticle1->setPos(middlePoint+sf::Vector2f(radius/2,0));
+	ChargeParticle1->setPos(middlePoint);
 	ChargeParticle1->setCharge(-charge * (outerCount));
 	ChargeParticle1->setStatic(true);
 

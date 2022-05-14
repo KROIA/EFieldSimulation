@@ -17,6 +17,7 @@
 #include "chargeParticle.h"
 #include "eField.h"
 #include "bField.h"
+#include "forceField.h"
 #include "distributionPlot.h"
 #include "pathPainter.h"
 #include "shape.h"
@@ -33,6 +34,7 @@ enum RenderLayerIndex
 {
 	eField = 0,
 	bField = 7,
+	forceField = 8,
 	paricle = 1,
 	mouseChargeParticle = 2,
 	path = 3,
@@ -70,8 +72,12 @@ class Simulation : public DisplayInterface
 
 		float eField_maxVectorLength;
 		float eField_minVectorLength;
+
 		float bField_maxVectorLength;
 		float bField_minVectorLength;
+
+		float forceField_maxVectorLength;
+		float forceField_minVectorLength;
 
 	};
 #ifdef USE_THREADS
@@ -144,6 +150,7 @@ class Simulation : public DisplayInterface
 	vector<DistributionPlot*> m_distributionPlots;
 	EField* m_eField;
 	BField* m_bField;
+	ForceField* m_forceField;
 
 	vector<ChargeParticle*> m_ChargeParticles;
 	vector<ChargeParticle*> m_eFieldChargeParticles;

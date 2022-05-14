@@ -162,6 +162,7 @@
     <ClCompile Include="src\distributionPlot.cpp" />
     <ClCompile Include="src\drawable.cpp" />
     <ClCompile Include="src\eField.cpp" />
+    <ClCompile Include="src\forceField.cpp" />
     <ClCompile Include="src\graphicsUtilities.cpp" />
     <ClCompile Include="src\chargeParticle.cpp" />
     <ClCompile Include="src\particle.cpp" />
@@ -183,6 +184,7 @@
     <ClInclude Include="inc\drawable.h" />
     <ClInclude Include="inc\drawableInterface.h" />
     <ClInclude Include="inc\eField.h" />
+    <ClInclude Include="inc\forceField.h" />
     <ClInclude Include="inc\graphicsUtilities.h" />
     <ClInclude Include="inc\chargeParticle.h" />
     <ClInclude Include="inc\particle.h" />

@@ -31,6 +31,10 @@ Simulation::Simulation(const Settings& settings)
 	m_bField->setMaxVectorLength(settings.bField_maxVectorLength);
 	m_bField->setMinVectorLength(settings.bField_minVectorLength);
 
+	m_forceField->setVisible(true);
+	m_forceField->setMaxVectorLength(settings.forceField_maxVectorLength);
+	m_forceField->setMinVectorLength(settings.forceField_minVectorLength);
+
 
 #ifdef USE_THREADS
 	m_threadData.resize(std::thread::hardware_concurrency());
@@ -132,6 +136,8 @@ void Simulation::addChargeParticle(ChargeParticle* ChargeParticle)
 
 	m_eField->addChargeParticle(ChargeParticle);
 	m_bField->addChargeParticle(ChargeParticle);
+	m_forceField->addChargeParticle(ChargeParticle);
+
 	m_eFieldChargeParticles.push_back(ChargeParticle);
 	m_ChargeParticles.push_back(ChargeParticle);
 	m_display->addDrawable(ChargeParticle, RenderLayerIndex::paricle);
@@ -150,6 +156,7 @@ void Simulation::clearChargeParticles()
 	m_display->clearDrawable(RenderLayerIndex::path);
 	m_eField->clearChargeParticles();
 	m_bField->clearChargeParticles();
+	m_forceField->clearChargeParticles();
 	for (ChargeParticle* p : m_eFieldChargeParticles)
 		delete p;
 	for (PathPainter* p : m_pathPatiners)
@@ -159,6 +166,7 @@ void Simulation::clearChargeParticles()
 	m_pathPatiners.clear();
 	m_eField->addChargeParticle(m_mouseChargeParticle.ChargeParticle);
 	m_bField->addChargeParticle(m_mouseChargeParticle.ChargeParticle);
+	m_forceField->addChargeParticle(m_mouseChargeParticle.ChargeParticle);
 	m_ChargeParticles.push_back(m_mouseChargeParticle.ChargeParticle);
 }
 void Simulation::addShape(Shape* shape)
@@ -231,6 +239,12 @@ void Simulation::onKeyPressEvent(const sf::Event& event)
 			//m_eField->setVisible(!m_eField->isVisible());
 			break;
 		}
+		case sf::Keyboard::Key::F:
+		{
+			m_display->toggleLayerVisibility(RenderLayerIndex::forceField);
+			//m_eField->setVisible(!m_eField->isVisible());
+			break;
+		}
 		case sf::Keyboard::Key::P:
 		{
 			for (PathPainter* p : m_pathPatiners)
@@ -250,6 +264,8 @@ void Simulation::onKeyPressEvent(const sf::Event& event)
 			m_eField->setMinVectorLength(m_eField->getMinVectorLength() * 0.75f);
 			m_bField->setMaxVectorLength(m_bField->getMaxVectorLength() * 0.75f);
 			m_bField->setMinVectorLength(m_bField->getMinVectorLength() * 0.75f);
+			m_forceField->setMaxVectorLength(m_forceField->getMaxVectorLength() * 0.75f);
+			m_forceField->setMinVectorLength(m_forceField->getMinVectorLength() * 0.75f);
 			break;
 		}
 		case sf::Keyboard::Key::Subtract:
@@ -258,6 +274,8 @@ void Simulation::onKeyPressEvent(const sf::Event& event)
 			m_eField->setMinVectorLength(m_eField->getMinVectorLength() * 1.5f);
 			m_bField->setMaxVectorLength(m_bField->getMaxVectorLength() * 1.5f);
 			m_bField->setMinVectorLength(m_bField->getMinVectorLength() * 1.5f);
+			m_forceField->setMaxVectorLength(m_forceField->getMaxVectorLength() * 1.5f);
+			m_forceField->setMinVectorLength(m_forceField->getMinVectorLength() * 1.5f);
 			break;
 		}
 	}
@@ -276,7 +294,7 @@ void Simulation::onMouseEvent(const sf::Event& event)
 		case sf::Event::MouseButtonPressed:
 		{
 			float mouseCharge;
-			float newChargeParticleCharge = 5;
+			float newChargeParticleCharge = 50;
 			bool spacePressed = sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Space);
 			
 			switch (event.mouseButton.button)
@@ -403,8 +421,10 @@ void Simulation::setup()
 		m_gridSize.y = m_gridSize.x * (m_worldSize.y / m_worldSize.x);
 		m_eField = new EField(m_worldSize, m_gridSize);
 		m_bField = new BField(m_worldSize, m_gridSize);
+		m_forceField = new ForceField(m_worldSize, m_gridSize);
 		m_display->addDrawable(m_eField, RenderLayerIndex::eField);
 		m_display->addDrawable(m_bField, RenderLayerIndex::bField);
+		m_display->addDrawable(m_forceField, RenderLayerIndex::forceField);
 	}
 
 	// ChargeParticles
@@ -417,6 +437,7 @@ void Simulation::setup()
 		m_display->addDrawable(m_mouseChargeParticle.ChargeParticle, RenderLayerIndex::mouseChargeParticle);
 		m_eField->addChargeParticle(m_mouseChargeParticle.ChargeParticle);
 		m_bField->addChargeParticle(m_mouseChargeParticle.ChargeParticle);
+		m_forceField->addChargeParticle(m_mouseChargeParticle.ChargeParticle);
 	}
 
 	// Text
@@ -436,6 +457,7 @@ void Simulation::clean()
 	m_display->clearDrawable();
 	m_eField->clearChargeParticles();
 	m_bField->clearChargeParticles();
+	m_forceField->clearChargeParticles();
 
 	for (ChargeParticle* p : m_eFieldChargeParticles)
 		delete p;
@@ -451,6 +473,8 @@ void Simulation::clean()
 	m_eField = nullptr;
 	delete m_bField;
 	m_bField = nullptr;
+	delete m_forceField;
+	m_forceField = nullptr;
 	delete m_display;
 	m_display = nullptr;
 	for (DistributionPlot* p : m_distributionPlots)
@@ -477,8 +501,10 @@ void Simulation::calculatePhysics()
 {
 	m_eField->calculatePhysics(m_simulationTimeInterval);
 	m_bField->calculatePhysics(m_simulationTimeInterval);
+	m_forceField->calculatePhysics(m_simulationTimeInterval);
 	m_eField->checkChargeParticleBounds();
-	m_bField->checkChargeParticleBounds();
+	//m_bField->checkChargeParticleBounds();
+	//m_forceField->checkChargeParticleBounds();
 
 #ifdef USE_THREADS
 	/*size_t threadCount = 6;
@@ -673,6 +699,7 @@ void Simulation::addChargeParticle(const sf::Vector2f& spawnPos, float charge, b
 	
 	m_eField->addChargeParticle(p);
 	m_bField->addChargeParticle(p);
+	m_forceField->addChargeParticle(p);
 	m_eFieldChargeParticles.push_back(p);
 	m_ChargeParticles.push_back(p);
 	m_display->addDrawable(p,RenderLayerIndex::paricle);

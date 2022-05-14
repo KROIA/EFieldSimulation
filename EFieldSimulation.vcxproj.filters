@@ -72,6 +72,9 @@
     <ClCompile Include="src\bField.cpp">
       <Filter>Quelldateien</Filter>
     </ClCompile>
+    <ClCompile Include="src\forceField.cpp">
+      <Filter>Quelldateien</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="inc\display.h">
@@ -129,6 +132,9 @@
       <Filter>Headerdateien</Filter>
     </ClInclude>
     <ClInclude Include="inc\bField.h">
+      <Filter>Headerdateien</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\forceField.h">
       <Filter>Headerdateien</Filter>
     </ClInclude>
   </ItemGroup>

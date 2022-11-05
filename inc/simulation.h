@@ -1,6 +1,6 @@
 #pragma once
 //#define USE_THREADS
-#define SYNC_WITH_DISPLAY
+//#define SYNC_WITH_DISPLAY
 
 #ifdef USE_THREADS
 #include <thread>

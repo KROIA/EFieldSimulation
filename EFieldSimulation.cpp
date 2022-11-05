@@ -19,20 +19,21 @@ void buildLevel_spreadSquare(Simulation& sim);
 void buildLevel_koaxialCable(Simulation& sim);
 void buildLevel_koaxialCableShell(Simulation& sim, size_t outerCount = 64, double radius = 250, float charge = 5);
 void buildLevel_mirror(Simulation& sim);
+void buildLevel_coil(Simulation& sim);
 
 int main()
 {
 	// ChargeParticle::setStandard_charge(0);
 	// ChargeParticle::setStandard_size(10);
-	 ChargeParticle::setStandard_drag(0.001);
+	 ChargeParticle::setStandard_drag(0.0001);
 	// ChargeParticle::setStandard_maxVelocity(10000);
 
 	Simulation::Settings settings;
 	settings.windowSize				= sf::Vector2u(1900, 900)*2u;
 	//settings.windowSize				= sf::Vector2u(1900, 900);
 	settings.targetFrameRate		= 60;
-	settings.gridSizeX				= settings.windowSize.x/19;
-	settings.physicsTimeInterval	= 0.1; // sec
+	settings.gridSizeX				= settings.windowSize.x/50;
+	settings.physicsTimeInterval	= 5; // sec
 	settings.leftClickCharge		= 5*64;
 	settings.rightClickCharge		= -5*64;
 
@@ -62,7 +63,8 @@ int main()
 	//buildLevel_koaxialCableShell(simulation);
 	//buildLevel_koaxialCableShell(simulation,200,500,5);
 	//buildLevel_koaxialCableShell(simulation,200,300,-5);
-	buildLevel_mirror(simulation);
+	//buildLevel_mirror(simulation);
+	buildLevel_coil(simulation);
     simulation.start();
 	return 0;
 }
@@ -551,5 +553,36 @@ void buildLevel_mirror(Simulation& sim)
 	ChargeParticle1->setStatic(true);
 	chargeParticles.push_back(ChargeParticle1);
 
+	sim.addChargeParticle(chargeParticles);
+}
+
+void buildLevel_coil(Simulation& sim)
+{
+	sf::Vector2f worldSize = sim.getWorldSize();
+	sf::Vector2f middlePoint = worldSize / 2.f;
+	float charge = 5;
+	vector<ChargeParticle*> chargeParticles;
+
+	int n = 100;
+	float radius = 150;
+	float spacing = 15;
+	sf::Vector2f topPos = middlePoint - sf::Vector2f(0, spacing / 2.f * n);
+	for (int i = 0; i < n; ++i)
+	{
+		ChargeParticle* ChargeParticle1 = new ChargeParticle;
+		ChargeParticle1->setRadius(10);
+		ChargeParticle1->setPos(topPos + sf::Vector2f(-radius, spacing * i));
+		ChargeParticle1->setCharge(charge);
+		ChargeParticle1->setStatic(true);
+
+		ChargeParticle* ChargeParticle2 = new ChargeParticle;
+		ChargeParticle2->setRadius(10);
+		ChargeParticle2->setPos(topPos + sf::Vector2f(+radius, spacing * i));
+		ChargeParticle2->setCharge(-charge);
+		ChargeParticle2->setStatic(true);
+
+		chargeParticles.push_back(ChargeParticle1);
+		chargeParticles.push_back(ChargeParticle2);
+	}
 	sim.addChargeParticle(chargeParticles);
 }
